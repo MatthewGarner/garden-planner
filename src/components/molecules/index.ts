@@ -6,6 +6,10 @@ import GardenDimensionsForm from './GardenDimensionsForm';
 import ReferenceObject from './ReferenceObject';
 import PlantDetailsPanel from './PlantDetailsPanel';
 import DraggablePlant from './DraggablePlant';
+import LoadingScreen from './LoadingScreen';
+import ToastProvider, { useToast } from './Toast';
+import ConfirmationProvider, { useConfirmation } from './ConfirmationDialog';
+import ErrorBoundary from './ErrorBoundary';
 
 export { 
   PlantCard, 
@@ -15,5 +19,11 @@ export {
   GardenDimensionsForm, 
   ReferenceObject, 
   PlantDetailsPanel,
-  DraggablePlant 
+  DraggablePlant,
+  LoadingScreen,
+  ToastProvider,
+  useToast,
+  ConfirmationProvider,
+  useConfirmation,
+  ErrorBoundary
 };

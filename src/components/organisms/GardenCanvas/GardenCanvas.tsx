@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Garden, Plant, PlantPosition } from '../../../types';
 import { DraggablePlant } from '../../molecules';
 import { plantService } from '../../../services';
 import { inchesToPixels } from '../../../utils/scale';
+import { useToast } from '../../molecules/Toast/ToastProvider';
+import { useConfirmation } from '../../molecules/ConfirmationDialog/ConfirmationProvider';
 
 interface GardenCanvasProps {
   garden: Garden;
@@ -26,6 +28,13 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [selectedPlantPosition, setSelectedPlantPosition] = useState<string | null>(null);
   const [isPlacingPlant, setIsPlacingPlant] = useState(!!selectedPlant);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hoveredCoordinates, setHoveredCoordinates] = useState<{x: number, y: number} | null>(null);
+  
+  // Access toast and confirmation dialogs
+  const { addToast } = useToast();
+  const { showConfirmation } = useConfirmation();
   
   // Update isPlacingPlant when selectedPlant changes
   useEffect(() => {
@@ -33,14 +42,15 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
   }, [selectedPlant]);
   
   // Get canvas size when the image loads
-  const handleImageLoad = () => {
+  const handleImageLoad = useCallback(() => {
     if (imageRef.current) {
       setCanvasSize({
         width: imageRef.current.clientWidth,
         height: imageRef.current.clientHeight
       });
+      setIsLoading(false);
     }
-  };
+  }, []);
   
   // Update canvas size on window resize
   useEffect(() => {
@@ -57,8 +67,19 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
     return () => window.removeEventListener('resize', updateCanvasSize);
   }, []);
   
-  // Handle click on the canvas
-  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Handle mousemove on the canvas to show placement preview
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPlacingPlant || !canvasRef.current) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setHoveredCoordinates({ x, y });
+  }, [isPlacingPlant]);
+  
+  // Handle click on the canvas for plant placement
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     // If we're not placing a new plant, just deselect
     if (!isPlacingPlant || !selectedPlant) {
       setSelectedPlantPosition(null);
@@ -125,34 +146,73 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
     // Call the callback to add the plant to the garden
     if (onPlantPlaced) {
       onPlantPlaced(newPosition);
+      
+      // Show success toast
+      addToast({
+        type: 'success',
+        message: `Added ${selectedPlant.name} to your garden`,
+        duration: 3000
+      });
     }
+    
+    // Reset hover preview
+    setHoveredCoordinates(null);
     
     // Stop placing the plant
     setIsPlacingPlant(false);
     if (onCancelPlacement) {
       onCancelPlacement();
     }
-  };
+  }, [garden, selectedPlant, isPlacingPlant, onPlantPlaced, onCancelPlacement, addToast]);
   
   // Handle plant position update
-  const handlePlantPositionChange = (updatedPosition: PlantPosition) => {
+  const handlePlantPositionChange = useCallback((updatedPosition: PlantPosition) => {
+    setIsDragging(true);
     if (onPlantUpdate) {
       onPlantUpdate(updatedPosition);
     }
-  };
+    
+    // Add a small delay before setting isDragging back to false
+    // This helps prevent flickering if multiple updates come in quickly
+    setTimeout(() => {
+      setIsDragging(false);
+    }, 100);
+  }, [onPlantUpdate]);
   
   // Handle plant selection
-  const handlePlantSelect = (id: string) => {
+  const handlePlantSelect = useCallback((id: string) => {
     setSelectedPlantPosition(id);
-  };
+  }, []);
   
-  // Handle plant deletion
-  const handlePlantDelete = (id: string) => {
-    if (onPlantRemove) {
-      onPlantRemove(id);
-    }
-    setSelectedPlantPosition(null);
-  };
+  // Handle plant deletion with confirmation
+  const handlePlantDelete = useCallback((id: string) => {
+    const plantPosition = garden.plants.find(p => p.id === id);
+    if (!plantPosition) return;
+    
+    const plant = plantService.getPlantById(plantPosition.plantId);
+    if (!plant) return;
+    
+    showConfirmation({
+      title: 'Remove Plant',
+      message: `Are you sure you want to remove ${plant.name} from your garden?`,
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      confirmVariant: 'danger',
+      onConfirm: () => {
+        if (onPlantRemove) {
+          onPlantRemove(id);
+          setSelectedPlantPosition(null);
+          
+          // Show toast notification
+          addToast({
+            type: 'info',
+            message: `Removed ${plant.name} from your garden`,
+            duration: 3000
+          });
+        }
+      }
+    });
+  }, [garden.plants, onPlantRemove, showConfirmation, addToast]);
   
   // Cancel plant placement on ESC key
   useEffect(() => {
@@ -160,6 +220,7 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
       if (e.key === 'Escape' && isPlacingPlant && onCancelPlacement) {
         onCancelPlacement();
         setIsPlacingPlant(false);
+        setHoveredCoordinates(null);
       }
     };
     
@@ -168,24 +229,99 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
   }, [isPlacingPlant, onCancelPlacement]);
   
   // Helper function to get plant by ID
-  const getPlantById = (id: string): Plant | undefined => {
+  const getPlantById = useCallback((id: string): Plant | undefined => {
     return plantService.getPlantById(id);
-  };
+  }, []);
+  
+  // Calculate placement preview dimensions
+  const placementPreview = useMemo(() => {
+    if (!selectedPlant || !hoveredCoordinates || !garden.scaleReference) return null;
+    
+    // Get the plant's dimensions based on current view time
+    const getDimensions = () => {
+      const { initialYear, threeYears, fiveYears, mature } = selectedPlant.dimensions;
+      
+      switch (garden.viewTime) {
+        case 'year3':
+          return threeYears;
+        case 'year5':
+          return fiveYears;
+        case 'mature':
+          return mature;
+        case 'current':
+        default:
+          return initialYear;
+      }
+    };
+    
+    const plantDimensions = getDimensions();
+    
+    // Calculate width and height in pixels
+    const { width, height } = inchesToPixels(plantDimensions, {
+      pixelsPerInch: garden.scaleReference.pixelsPerInch,
+      referenceObjectWidth: garden.scaleReference.width,
+      referenceRealWidth: garden.scaleReference.realWidth
+    });
+    
+    return {
+      width,
+      height,
+      x: hoveredCoordinates.x - width / 2,
+      y: hoveredCoordinates.y - height / 2
+    };
+  }, [selectedPlant, hoveredCoordinates, garden.scaleReference, garden.viewTime]);
   
   return (
     <div 
       ref={canvasRef}
-      className={`relative mx-auto bg-white rounded-lg shadow-md overflow-hidden ${isPlacingPlant ? 'cursor-crosshair' : 'cursor-default'}`}
+      className={`relative mx-auto bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
+        isPlacingPlant ? 'cursor-crosshair' : 'cursor-default'
+      } ${isDragging ? 'scale-[0.99]' : 'scale-100'}`}
       onClick={handleCanvasClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setHoveredCoordinates(null)}
     >
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-gray-600">Loading garden...</p>
+          </div>
+        </div>
+      )}
+      
       {/* Garden image */}
       <img 
         ref={imageRef}
         src={garden.imageUrl} 
         alt={garden.name}
-        className="w-full h-auto"
+        className="w-full h-auto transition-opacity duration-300"
         onLoad={handleImageLoad}
+        style={{ opacity: isLoading ? 0.5 : 1 }}
       />
+      
+      {/* Placement preview */}
+      {isPlacingPlant && placementPreview && selectedPlant && (
+        <div 
+          className="absolute pointer-events-none transform-gpu transition-opacity duration-150 z-10 opacity-70 animate-pulse-subtle"
+          style={{
+            left: placementPreview.x,
+            top: placementPreview.y,
+            width: placementPreview.width,
+            height: placementPreview.height
+          }}
+        >
+          <div 
+            className="w-full h-full rounded-full overflow-hidden border-2 border-primary bg-primary bg-opacity-40"
+            style={{
+              backgroundImage: `url(${selectedPlant.images.thumbnail.src})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          />
+        </div>
+      )}
       
       {/* Placed plants */}
       {garden.plants.map(plantPosition => {
@@ -210,7 +346,7 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
       })}
       
       {/* Garden dimensions and scale info */}
-      <div className="absolute top-2 left-2 bg-white bg-opacity-75 p-2 rounded text-xs">
+      <div className="absolute top-2 left-2 bg-white bg-opacity-80 p-2 rounded text-xs backdrop-blur-sm transition-opacity duration-300 hover:bg-opacity-100">
         <div>Dimensions: {garden.dimensions.width}' × {garden.dimensions.height}'</div>
         {garden.scaleReference && (
           <div>Scale: {garden.scaleReference.pixelsPerInch.toFixed(2)} px/inch</div>
@@ -219,10 +355,17 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
       
       {/* Placement instruction overlay */}
       {isPlacingPlant && selectedPlant && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 pointer-events-none">
-          <div className="bg-white p-4 rounded-lg text-center">
-            <h3 className="font-bold">Ready to Place: {selectedPlant.name}</h3>
-            <p className="text-sm text-gray-600 mb-2">Click on the garden to place this plant</p>
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 pointer-events-none z-20 animate-fade-in">
+          <div className="bg-white p-4 rounded-lg text-center max-w-xs">
+            <div className="w-12 h-12 rounded-full mx-auto mb-2 border border-primary overflow-hidden">
+              <img 
+                src={selectedPlant.images.thumbnail.src} 
+                alt={selectedPlant.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <h3 className="font-bold text-lg mb-1">{selectedPlant.name}</h3>
+            <p className="text-sm text-gray-700 mb-2">Click on the garden to place this plant</p>
             <p className="text-xs text-gray-500">Press ESC to cancel</p>
           </div>
         </div>
@@ -230,5 +373,35 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
     </div>
   );
 };
+
+// Add animation styles
+const injectStyles = () => {
+  if (typeof document !== 'undefined') {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+      @keyframes pulse-subtle {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+      }
+      .animate-pulse-subtle {
+        animation: pulse-subtle 2s infinite ease-in-out;
+      }
+      @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .animate-fade-in {
+        animation: fade-in 0.3s ease-out;
+      }
+    `;
+    document.head.appendChild(styleElement);
+  }
+};
+
+// Call this function when the component mounts
+if (typeof window !== 'undefined') {
+  injectStyles();
+}
 
 export default GardenCanvas;
