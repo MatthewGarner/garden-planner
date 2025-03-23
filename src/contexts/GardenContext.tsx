@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, useCallback } from 'react';
 import { Garden, Plant, PlantPosition, GardenDimensions, ScaleReference } from '../types';
 import { gardenService, plantService } from '../services';
 import { generateUUID } from '../utils/general';
@@ -288,7 +288,7 @@ const gardenReducer = (state: GardenState, action: GardenAction): GardenState =>
 const GardenContext = createContext<GardenContextType | undefined>(undefined);
 
 // Provider component
-export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(gardenReducer, initialState);
   
   // Load gardens on mount
@@ -301,9 +301,8 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         dispatch({ type: 'LOAD_GARDENS_SUCCESS', payload: gardens });
         
         // Also load current garden if it exists
-        const currentGardenId = gardenService.getCurrentGarden()?.id;
-        if (currentGardenId) {
-          const currentGarden = gardens.find(garden => garden.id === currentGardenId) || null;
+        const currentGarden = gardenService.getCurrentGarden();
+        if (currentGarden) {
           dispatch({ type: 'SET_CURRENT_GARDEN', payload: currentGarden });
         }
       } catch (error) {
@@ -316,10 +315,10 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
     
     loadGardens();
-  }, []);
+  }, []); // Empty dependency array ensures this only runs once on mount
   
   // Create a new garden
-  const createGarden = (name: string, imageUrl: string, dimensions: GardenDimensions): Garden => {
+  const createGarden = useCallback((name: string, imageUrl: string, dimensions: GardenDimensions): Garden => {
     try {
       const newGarden = gardenService.createGarden(name, imageUrl, dimensions);
       dispatch({ type: 'CREATE_GARDEN', payload: newGarden });
@@ -332,10 +331,10 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       });
       throw error;
     }
-  };
+  }, [dispatch]);
   
   // Load a garden by ID
-  const loadGarden = (gardenId: string): Garden | null => {
+  const loadGarden = useCallback((gardenId: string): Garden | null => {
     try {
       const garden = gardenService.getGardenById(gardenId);
       
@@ -352,10 +351,10 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       });
       return null;
     }
-  };
+  }, [dispatch]);
   
   // Update garden
-  const updateGarden = (garden: Garden): void => {
+  const updateGarden = useCallback((garden: Garden): void => {
     try {
       gardenService.saveGarden(garden);
       dispatch({ type: 'UPDATE_GARDEN', payload: garden });
@@ -366,10 +365,10 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         payload: 'Failed to update garden. Please try again.' 
       });
     }
-  };
+  }, [dispatch]);
   
   // Delete garden
-  const deleteGarden = (gardenId: string): void => {
+  const deleteGarden = useCallback((gardenId: string): void => {
     try {
       gardenService.deleteGarden(gardenId);
       dispatch({ type: 'DELETE_GARDEN', payload: gardenId });
@@ -380,10 +379,10 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         payload: 'Failed to delete garden. Please try again.' 
       });
     }
-  };
+  }, [dispatch]);
   
   // Add plant to garden
-  const addPlantToGarden = (
+  const addPlantToGarden = useCallback((
     gardenId: string, 
     plantId: string, 
     position: Omit<PlantPosition, 'id' | 'plantId'>
@@ -411,10 +410,10 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       });
       return null;
     }
-  };
+  }, [dispatch]);
   
   // Update plant position
-  const updatePlantPosition = (gardenId: string, plantPosition: PlantPosition): void => {
+  const updatePlantPosition = useCallback((gardenId: string, plantPosition: PlantPosition): void => {
     try {
       gardenService.updatePlantPosition(gardenId, plantPosition);
       
@@ -429,10 +428,10 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         payload: 'Failed to update plant position. Please try again.' 
       });
     }
-  };
+  }, [dispatch]);
   
   // Remove plant from garden
-  const removePlantFromGarden = (gardenId: string, plantId: string): void => {
+  const removePlantFromGarden = useCallback((gardenId: string, plantId: string): void => {
     try {
       gardenService.removePlantFromGarden(gardenId, plantId);
       
@@ -447,10 +446,10 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         payload: 'Failed to remove plant from garden. Please try again.' 
       });
     }
-  };
+  }, [dispatch]);
   
   // Set scale reference
-  const setScaleReference = (
+  const setScaleReference = useCallback((
     gardenId: string, 
     reference: { width: number; height: number; realWidth: number }
   ): void => {
@@ -463,12 +462,12 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       
       const updatedGarden = gardenService.setScaleReference(gardenId, reference);
       
-      if (updatedGarden) {
+      if (updatedGarden && updatedGarden.scaleReference) {
         dispatch({ 
           type: 'SET_SCALE_REFERENCE', 
           payload: { 
             gardenId, 
-            scaleReference: updatedGarden.scaleReference! 
+            scaleReference: updatedGarden.scaleReference
           } 
         });
       }
@@ -479,10 +478,10 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         payload: 'Failed to set scale reference. Please try again.' 
       });
     }
-  };
+  }, [dispatch]);
   
   // Set view time
-  const setViewTime = (gardenId: string, viewTime: Garden['viewTime']): void => {
+  const setViewTime = useCallback((gardenId: string, viewTime: Garden['viewTime']): void => {
     try {
       gardenService.setGardenViewTime(gardenId, viewTime);
       
@@ -497,10 +496,10 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         payload: 'Failed to set view time. Please try again.' 
       });
     }
-  };
+  }, [dispatch]);
   
   // Set dimensions
-  const setDimensions = (gardenId: string, dimensions: GardenDimensions): void => {
+  const setDimensions = useCallback((gardenId: string, dimensions: GardenDimensions): void => {
     try {
       gardenService.updateGardenDimensions(gardenId, dimensions);
       
@@ -515,12 +514,12 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         payload: 'Failed to set dimensions. Please try again.' 
       });
     }
-  };
+  }, [dispatch]);
   
   // Get plant by ID
-  const getPlantById = (plantId: string): Plant | undefined => {
+  const getPlantById = useCallback((plantId: string): Plant | undefined => {
     return plantService.getPlantById(plantId);
-  };
+  }, []);
   
   const contextValue = {
     state,
@@ -546,7 +545,7 @@ export const GardenProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 };
 
 // Custom hook to use the garden context
-export const useGarden = (): GardenContextType => {
+const useGarden = (): GardenContextType => {
   const context = useContext(GardenContext);
   
   if (context === undefined) {
@@ -555,3 +554,8 @@ export const useGarden = (): GardenContextType => {
   
   return context;
 };
+
+// Export the provider component as a named export
+export { GardenProvider, useGarden };
+// Also export the default context if needed
+export default GardenContext;

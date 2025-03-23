@@ -1,201 +1,187 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../templates';
 import { Button } from '../../atoms';
 import { GardenPlantSelector, GardenCanvas } from '../../organisms';
-import { gardenService } from '../../../services';
-import { Garden, Plant, PlantPosition } from '../../../types';
+import { Plant, PlantPosition } from '../../../types';
+// Make sure to use the correct path and export
+import { useGarden } from '../../../contexts/GardenContext';
+import { useWindowSize } from '../../../hooks/useWindowSize';
+import { useToast } from '../../molecules/Toast/ToastProvider';
+import LoadingScreen from '../../molecules/LoadingScreen/LoadingScreen';
 
 const GardenEditorPage: React.FC = () => {
   const { gardenId } = useParams<{ gardenId: string }>();
   const navigate = useNavigate();
-  const [garden, setGarden] = useState<Garden | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Default closed on mobile
+  const { isMobile } = useWindowSize();
+  const { addToast } = useToast();
+  
+  // Access garden context
+  const { 
+    state: { currentGarden, loading, error },
+    loadGarden,
+    addPlantToGarden, 
+    updatePlantPosition, 
+    removePlantFromGarden,
+    setViewTime,
+    updateGarden
+  } = useGarden();
+  
+  // Local state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [isUnsaved, setIsUnsaved] = useState(false);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   
-  // Update isMobileView on window resize
+  // Load garden data on mount
   useEffect(() => {
-    const handleResize = () => {
-      const newIsMobileView = window.innerWidth < 768;
-      setIsMobileView(newIsMobileView);
-      
-      // Automatically open sidebar on desktop if it was closed
-      if (!newIsMobileView && !isSidebarOpen) {
-        setIsSidebarOpen(true);
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Initial check
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [isSidebarOpen]);
+    if (gardenId) {
+      loadGarden(gardenId);
+    }
+  }, [gardenId, loadGarden]);
   
+  // Update sidebar state when mobile view changes
   useEffect(() => {
-    const loadGarden = () => {
-      if (!gardenId) {
-        setError('No garden ID provided');
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        const loadedGarden = gardenService.getGardenById(gardenId);
-        
-        if (!loadedGarden) {
-          setError(`Garden with ID ${gardenId} not found`);
-          setLoading(false);
-          return;
-        }
-        
-        setGarden(loadedGarden);
-        
-        // If the garden doesn't have a scale reference, redirect to the scaling page
-        if (!loadedGarden.scaleReference) {
-          navigate(`/garden/${gardenId}/scale`);
-          return;
-        }
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load garden data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadGarden();
-  }, [gardenId, navigate]);
+    // Automatically open sidebar on desktop if it was closed
+    if (!isMobile && !isSidebarOpen) {
+      setIsSidebarOpen(true);
+    }
+  }, [isMobile, isSidebarOpen]);
   
   // Handle adding a plant to the garden
-  const handleAddPlantToGarden = (plant: Plant) => {
+  const handleAddPlantToGarden = useCallback((plant: Plant) => {
     setSelectedPlant(plant);
     
     // On mobile, close the sidebar when a plant is selected for placement
-    if (isMobileView) {
+    if (isMobile) {
       setIsSidebarOpen(false);
     }
-  };
+  }, [isMobile]);
 
   // Handle plant placement on the canvas
-  const handlePlantPlaced = (plantPosition: PlantPosition) => {
-    if (!garden || !gardenId) return;
+  const handlePlantPlaced = useCallback((plantPosition: PlantPosition) => {
+    if (!gardenId) return;
     
     try {
-      // Add plant to garden through the service
-      gardenService.addPlantToGarden(gardenId, plantPosition);
-      
-      // Update local garden state
-      const updatedGarden = gardenService.getGardenById(gardenId);
-      if (updatedGarden) {
-        setGarden(updatedGarden);
-      }
+      // Add plant to garden through the context
+      addPlantToGarden(gardenId, plantPosition.plantId, {
+        x: plantPosition.x,
+        y: plantPosition.y,
+        width: plantPosition.width,
+        height: plantPosition.height,
+        rotation: plantPosition.rotation,
+        scale: plantPosition.scale,
+        zIndex: plantPosition.zIndex
+      });
       
       setSelectedPlant(null);
       setIsUnsaved(true);
     } catch (err) {
       console.error('Error adding plant to garden:', err);
+      
+      addToast({
+        type: 'error',
+        message: 'Failed to add plant to garden',
+        duration: 5000
+      });
     }
-  };
+  }, [gardenId, addPlantToGarden, addToast]);
 
   // Handle plant position updates
-  const handlePlantUpdate = (updatedPosition: PlantPosition) => {
-    if (!garden || !gardenId) return;
+  const handlePlantUpdate = useCallback((updatedPosition: PlantPosition) => {
+    if (!gardenId) return;
     
     try {
-      // Update plant in garden through the service
-      gardenService.updatePlantPosition(gardenId, updatedPosition);
-      
-      // Update local garden state
-      const updatedGarden = gardenService.getGardenById(gardenId);
-      if (updatedGarden) {
-        setGarden(updatedGarden);
-      }
-      
+      // Update plant in garden through the context
+      updatePlantPosition(gardenId, updatedPosition);
       setIsUnsaved(true);
     } catch (err) {
       console.error('Error updating plant position:', err);
+      
+      addToast({
+        type: 'error',
+        message: 'Failed to update plant position',
+        duration: 5000
+      });
     }
-  };
+  }, [gardenId, updatePlantPosition, addToast]);
 
   // Handle plant removal
-  const handlePlantRemove = (plantId: string) => {
-    if (!garden || !gardenId) return;
+  const handlePlantRemove = useCallback((plantId: string) => {
+    if (!gardenId) return;
     
     try {
-      // Remove plant from garden through the service
-      gardenService.removePlantFromGarden(gardenId, plantId);
-      
-      // Update local garden state
-      const updatedGarden = gardenService.getGardenById(gardenId);
-      if (updatedGarden) {
-        setGarden(updatedGarden);
-      }
-      
+      // Remove plant from garden through the context
+      removePlantFromGarden(gardenId, plantId);
       setIsUnsaved(true);
     } catch (err) {
       console.error('Error removing plant from garden:', err);
+      
+      addToast({
+        type: 'error',
+        message: 'Failed to remove plant',
+        duration: 5000
+      });
     }
-  };
+  }, [gardenId, removePlantFromGarden, addToast]);
 
   // Toggle sidebar
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback(() => {
     setIsSidebarOpen(!isSidebarOpen);
-  };
+  }, [isSidebarOpen]);
 
   // Cancel plant placement
-  const handleCancelPlacement = () => {
+  const handleCancelPlacement = useCallback(() => {
     setSelectedPlant(null);
-  };
+  }, []);
 
   // Change garden view time
-  const handleViewTimeChange = (viewTime: Garden['viewTime']) => {
-    if (!garden || !gardenId) return;
+  const handleViewTimeChange = useCallback((viewTime: 'current' | 'year3' | 'year5' | 'mature') => {
+    if (!gardenId || !currentGarden) return;
     
     try {
-      gardenService.setGardenViewTime(gardenId, viewTime);
-      
-      // Update garden state
-      setGarden({
-        ...garden,
-        viewTime
-      });
+      setViewTime(gardenId, viewTime);
     } catch (err) {
       console.error('Error changing view time:', err);
+      
+      addToast({
+        type: 'error',
+        message: 'Failed to change view time',
+        duration: 5000
+      });
     }
-  };
+  }, [gardenId, currentGarden, setViewTime, addToast]);
 
   // Save garden changes
-  const handleSaveGarden = () => {
-    if (!garden || !gardenId) return;
+  const handleSaveGarden = useCallback(() => {
+    if (!currentGarden) return;
     
     try {
-      gardenService.saveGarden(garden);
+      updateGarden(currentGarden);
       setIsUnsaved(false);
+      
+      addToast({
+        type: 'success',
+        message: 'Garden saved successfully',
+        duration: 3000
+      });
     } catch (err) {
       console.error('Error saving garden:', err);
+      
+      addToast({
+        type: 'error',
+        message: 'Failed to save garden',
+        duration: 5000
+      });
     }
-  };
+  }, [currentGarden, updateGarden, addToast]);
   
+  // Show loading screen if garden is loading
   if (loading) {
-    return (
-      <MainLayout>
-        <div className="container mx-auto py-8 flex items-center justify-center min-h-[500px]">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-500">Loading garden data...</p>
-          </div>
-        </div>
-      </MainLayout>
-    );
+    return <LoadingScreen message="Loading garden..." />;
   }
   
-  if (error || !garden) {
+  // Show error message if garden can't be loaded
+  if (error || !currentGarden) {
     return (
       <MainLayout>
         <div className="container mx-auto py-8 flex items-center justify-center min-h-[500px]">
@@ -234,7 +220,7 @@ const GardenEditorPage: React.FC = () => {
                 )}
               </svg>
             </button>
-            <h1 className="text-xl font-bold truncate max-w-[150px] md:max-w-xs">{garden.name}</h1>
+            <h1 className="text-xl font-bold truncate max-w-[150px] md:max-w-xs">{currentGarden.name}</h1>
             {isUnsaved && (
               <span className="ml-2 text-sm text-gray-500 hidden sm:inline">(Unsaved changes)</span>
             )}
@@ -244,8 +230,8 @@ const GardenEditorPage: React.FC = () => {
             {/* Time view selector - simplified on mobile */}
             <div className="flex items-center">
               <select 
-                value={garden.viewTime}
-                onChange={(e) => handleViewTimeChange(e.target.value as Garden['viewTime'])}
+                value={currentGarden.viewTime}
+                onChange={(e) => handleViewTimeChange(e.target.value as 'current' | 'year3' | 'year5' | 'mature')}
                 className="input py-1.5 px-2 text-sm rounded-md"
                 aria-label="Growth timeline"
               >
@@ -284,25 +270,25 @@ const GardenEditorPage: React.FC = () => {
           {/* Sidebar with plant selection - slide in on mobile, fixed on desktop */}
           <div 
             className={`${
-              isMobileView 
+              isMobile 
                 ? `fixed inset-y-0 left-0 z-30 w-80 bg-white transform transition-transform duration-300 ease-in-out ${
                     isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
                   }`
                 : `${isSidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 h-full border-r overflow-hidden`
             }`}
-            style={{ top: isMobileView ? '64px' : '0' }}
+            style={{ top: isMobile ? '64px' : '0' }}
           >
             {isSidebarOpen && (
               <div className="h-full flex flex-col">
                 <div className="flex-1 overflow-auto">
                   <GardenPlantSelector
                     onAddPlantToGarden={handleAddPlantToGarden}
-                    viewTime={garden.viewTime}
+                    viewTime={currentGarden.viewTime}
                   />
                 </div>
                 
                 {/* Mobile-only close button at bottom */}
-                {isMobileView && (
+                {isMobile && (
                   <div className="p-4 border-t">
                     <Button 
                       variant="outline" 
@@ -318,7 +304,7 @@ const GardenEditorPage: React.FC = () => {
           </div>
           
           {/* Overlay to close sidebar on mobile */}
-          {isMobileView && isSidebarOpen && (
+          {isMobile && isSidebarOpen && (
             <div 
               className="fixed inset-0 bg-black bg-opacity-50 z-20"
               onClick={toggleSidebar}
@@ -332,7 +318,7 @@ const GardenEditorPage: React.FC = () => {
             {/* Garden canvas */}
             <div className="flex-1 p-4">
               <GardenCanvas
-                garden={garden}
+                garden={currentGarden}
                 selectedPlant={selectedPlant}
                 onPlantPlaced={handlePlantPlaced}
                 onPlantUpdate={handlePlantUpdate}
@@ -342,7 +328,7 @@ const GardenEditorPage: React.FC = () => {
             </div>
             
             {/* Mobile bottom action bar */}
-            {isMobileView && !isSidebarOpen && (
+            {isMobile && !isSidebarOpen && (
               <div className="bg-white border-t p-3 flex justify-between items-center">
                 <Button 
                   variant="outline"

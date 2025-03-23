@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
+import React, { useState, useRef, useCallback, memo } from 'react';
 import { Plant, PlantPosition, ScaleReference } from '../../../types';
 import { getPlantDimensionsForViewTime } from '../../../utils/plantutils';
 import { useWindowSize } from '../../../hooks/useWindowSize';
@@ -45,11 +45,6 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
     
     return { width: widthInPixels, height: heightInPixels };
   }, [plant, viewTime, scaleReference.pixelsPerInch, scale]);
-
-  // Convert position from percentage to pixels
-  const percentToPixels = useCallback((percent: number, dimension: 'width' | 'height'): number => {
-    return (percent / 100) * (dimension === 'width' ? containerWidth : containerHeight);
-  }, [containerWidth, containerHeight]);
 
   // Convert position from pixels to percentage
   const pixelsToPercent = useCallback((pixels: number, dimension: 'width' | 'height'): number => {
@@ -180,7 +175,9 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
           backgroundColor: `rgba(144, 238, 144, ${isSelected ? 0.5 : 0.3})`,
           backgroundImage: `url(${plant.images.thumbnail.src})`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundPosition: 'center',
+          // Add fallback background color
+          backgroundRepeat: 'no-repeat'
         }}
       />
       

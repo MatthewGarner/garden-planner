@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GardenDimensionsForm, ReferenceObject } from '../../molecules';
 import { Button } from '../../atoms';
 import { GardenDimensions, Garden } from '../../../types';
-import { gardenService } from '../../../services';
+import { useGarden } from '../../../contexts/GardenContext';
+import { useToast } from '../../molecules/Toast/ToastProvider';
 
 interface GardenScalingProps {
   garden: Garden;
@@ -21,76 +22,96 @@ const GardenScaling: React.FC<GardenScalingProps> = ({
   onScalingComplete
 }) => {
   const navigate = useNavigate();
+  const { addToast } = useToast();
+  
+  // Access garden context
+  const { setScaleReference, setDimensions } = useGarden();
+  
+  // Local state
   const [currentStep, setCurrentStep] = useState<ScalingStep>(ScalingStep.REFERENCE_OBJECT);
-  const [scaleReference, setScaleReference] = useState<{ width: number; height: number; realWidth: number } | null>(null);
+  const [scaleReference, setScaleRef] = useState<{ width: number; height: number; realWidth: number } | null>(null);
   const [gardenDimensions, setGardenDimensions] = useState<GardenDimensions>(garden.dimensions);
   const [error, setError] = useState<string | null>(null);
-  const [updatedGarden, setUpdatedGarden] = useState<Garden | null>(null);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   // Handle reference object placement
-  const handleReferenceSet = (reference: { width: number; height: number; realWidth: number }) => {
-    setScaleReference(reference);
+  const handleReferenceSet = useCallback((reference: { width: number; height: number; realWidth: number }) => {
+    setScaleRef(reference);
     setCurrentStep(ScalingStep.GARDEN_DIMENSIONS);
-  };
+  }, []);
 
   // Handle garden dimensions setting
-  const handleDimensionsSet = (dimensions: GardenDimensions) => {
+  const handleDimensionsSet = useCallback((dimensions: GardenDimensions) => {
     setGardenDimensions(dimensions);
     setCurrentStep(ScalingStep.CONFIRMATION);
-  };
+  }, []);
 
   // Complete the scaling process
-  const handleComplete = () => {
+  const handleComplete = useCallback(() => {
     if (!scaleReference) {
       setError('Reference object is required');
+      addToast({
+        type: 'error',
+        message: 'Reference object is required',
+        duration: 3000
+      });
       return;
     }
 
     try {
-      // Update the garden with scale reference and dimensions
-      const updated = gardenService.setScaleReference(garden.id, scaleReference);
-      
-      if (!updated) {
-        setError('Failed to update garden scale reference');
-        return;
-      }
+      // Update the garden with scale reference
+      setScaleReference(garden.id, scaleReference);
       
       // Also update dimensions if they've changed
       if (gardenDimensions.width !== garden.dimensions.width || 
           gardenDimensions.height !== garden.dimensions.height) {
-        gardenService.updateGardenDimensions(garden.id, gardenDimensions);
-        
-        // Get the fully updated garden
-        const fullyUpdated = gardenService.getGardenById(garden.id);
-        
-        if (fullyUpdated) {
-          setUpdatedGarden(fullyUpdated);
-          
-          if (onScalingComplete) {
-            onScalingComplete(fullyUpdated);
-          }
-        }
-      } else {
-        setUpdatedGarden(updated);
-        
-        if (onScalingComplete) {
-          onScalingComplete(updated);
-        }
+        setDimensions(garden.id, gardenDimensions);
       }
+      
+      // Mark as completed
+      setIsCompleted(true);
+      
+      // Call the callback if provided
+      if (onScalingComplete) {
+        // Get updated garden with new scale reference
+        const updatedGarden = {
+          ...garden,
+          scaleReference: {
+            ...scaleReference,
+            pixelsPerInch: scaleReference.width / scaleReference.realWidth
+          },
+          dimensions: gardenDimensions
+        };
+        
+        onScalingComplete(updatedGarden);
+      }
+      
+      // Show success message
+      addToast({
+        type: 'success',
+        message: 'Garden scaling completed successfully',
+        duration: 3000
+      });
     } catch (err) {
       console.error('Error updating garden:', err);
       setError('Failed to save garden scaling information');
+      
+      addToast({
+        type: 'error',
+        message: 'Failed to save garden scaling information',
+        duration: 5000
+      });
     }
-  };
+  }, [garden, scaleReference, gardenDimensions, setScaleReference, setDimensions, onScalingComplete, addToast]);
 
   // Handle going back a step
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (currentStep === ScalingStep.GARDEN_DIMENSIONS) {
       setCurrentStep(ScalingStep.REFERENCE_OBJECT);
     } else if (currentStep === ScalingStep.CONFIRMATION) {
       setCurrentStep(ScalingStep.GARDEN_DIMENSIONS);
     }
-  };
+  }, [currentStep]);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -235,7 +256,7 @@ const GardenScaling: React.FC<GardenScalingProps> = ({
               </div>
             )}
             
-            {updatedGarden ? (
+            {isCompleted ? (
               <div className="bg-green-50 text-green-600 p-4 rounded-lg mb-6">
                 Garden scaling has been successfully updated!
               </div>
@@ -250,7 +271,7 @@ const GardenScaling: React.FC<GardenScalingProps> = ({
               </div>
             )}
             
-            {updatedGarden && (
+            {isCompleted && (
               <div className="flex justify-end">
                 <Button 
                   variant="primary"

@@ -3,63 +3,48 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../templates';
 import { GardenScaling } from '../../organisms';
 import { Button } from '../../atoms';
-import { gardenService } from '../../../services';
 import { Garden } from '../../../types';
+import { useGarden } from '../../../contexts/GardenContext';
+import { useToast } from '../../molecules/Toast/ToastProvider';
+import LoadingScreen from '../../molecules/LoadingScreen/LoadingScreen';
 
 const GardenScalingPage: React.FC = () => {
   const { gardenId } = useParams<{ gardenId: string }>();
   const navigate = useNavigate();
-  const [garden, setGarden] = useState<Garden | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
   
+  // Access garden context
+  const { 
+    state: { currentGarden, loading, error }, 
+    loadGarden, 
+    setScaleReference 
+  } = useGarden();
+  
+  // Load garden on mount
   useEffect(() => {
-    const loadGarden = () => {
-      if (!gardenId) {
-        setError('No garden ID provided');
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        const loadedGarden = gardenService.getGardenById(gardenId);
-        
-        if (!loadedGarden) {
-          setError(`Garden with ID ${gardenId} not found`);
-          setLoading(false);
-          return;
-        }
-        
-        setGarden(loadedGarden);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load garden data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadGarden();
-  }, [gardenId]);
+    if (gardenId) {
+      loadGarden(gardenId);
+    }
+  }, [gardenId, loadGarden]);
   
+  // Handle scale reference setting
   const handleScalingComplete = (updatedGarden: Garden) => {
-    setGarden(updatedGarden);
+    if (gardenId) {
+      addToast({
+        type: 'success',
+        message: 'Garden scaling completed successfully',
+        duration: 3000
+      });
+    }
   };
   
+  // Show loading screen while garden is loading
   if (loading) {
-    return (
-      <MainLayout>
-        <div className="container mx-auto py-8 flex items-center justify-center min-h-[500px]">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-500">Loading garden data...</p>
-          </div>
-        </div>
-      </MainLayout>
-    );
+    return <LoadingScreen message="Loading garden data..." />;
   }
   
-  if (error || !garden) {
+  // Show error message if garden can't be loaded
+  if (error || !currentGarden) {
     return (
       <MainLayout>
         <div className="container mx-auto py-8 flex items-center justify-center min-h-[500px]">
@@ -89,7 +74,7 @@ const GardenScalingPage: React.FC = () => {
         </div>
         
         <GardenScaling 
-          garden={garden}
+          garden={currentGarden}
           onScalingComplete={handleScalingComplete}
         />
       </div>

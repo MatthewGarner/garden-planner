@@ -242,7 +242,11 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
     
     return garden.plants.map(plantPosition => {
       const plant = getPlantById(plantPosition.plantId);
-      if (!plant) return null;
+      if (!plant) {
+        // Skip plants that can't be found
+        console.warn(`Plant with ID ${plantPosition.plantId} not found, skipping rendering`);
+        return null;
+      }
       
       return (
         <DraggablePlant
@@ -259,7 +263,7 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
           onDelete={handlePlantDelete}
         />
       );
-    });
+    }).filter(Boolean); // Filter out null elements
   }, [
     garden.plants, 
     garden.scaleReference, 

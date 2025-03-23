@@ -1,5 +1,6 @@
 import { Plant, PlantCategory, SunExposure, WaterNeeds, GrowthRate } from '../types';
 import plantsData from '../data/plants.json';
+import { getPlantImagePlaceholder } from '../utils/placeholderImages';
 
 // Type assertion to ensure the imported JSON is treated as an array of Plant objects
 const plants = plantsData as Plant[];
@@ -8,19 +9,25 @@ const plants = plantsData as Plant[];
  * Service for accessing and filtering plant data
  */
 export const plantService = {
-  /**
+ /**
    * Get all plants
    */
-  getAllPlants: (): Plant[] => {
-    return plants;
-  },
+ getAllPlants: (): Plant[] => {
+  // Patch all plants with local placeholder images
+  return plants.map(plant => plantService.patchPlantImages(plant));
+},
 
   /**
    * Get a plant by ID
    */
   getPlantById: (id: string): Plant | undefined => {
-    return plants.find(plant => plant.id === id);
+    const plant = plants.find(plant => plant.id === id);
+    if (!plant) return undefined;
+    
+    // Patch the plant with local placeholder images
+    return plantService.patchPlantImages(plant);
   },
+
 
   /**
    * Get a random plant
@@ -101,6 +108,25 @@ export const plantService = {
     );
   },
 
+  
+  /**
+   * Patch plant data to use local placeholder images
+   */
+  patchPlantImages: (plant: Plant): Plant => {
+    return {
+      ...plant,
+      images: {
+        thumbnail: {
+          src: getPlantImagePlaceholder(plant, 'thumbnail'),
+          alt: plant.name
+        },
+        fullSize: {
+          src: getPlantImagePlaceholder(plant, 'fullSize'),
+          alt: plant.name
+        }
+      }
+    };
+  },
   /**
    * Search plants by name or scientific name
    */

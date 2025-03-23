@@ -4,6 +4,7 @@ import LoadingScreen from './components/molecules/LoadingScreen/LoadingScreen';
 import ToastProvider from './components/molecules/Toast/ToastProvider';
 import ConfirmationProvider from './components/molecules/ConfirmationDialog/ConfirmationProvider';
 import ErrorBoundary from './components/molecules/ErrorBoundary';
+// Import GardenProvider directly - make sure the path is correct
 import { GardenProvider } from './contexts/GardenContext';
 
 // Lazy-loaded page components

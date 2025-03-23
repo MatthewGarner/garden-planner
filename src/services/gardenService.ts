@@ -183,27 +183,30 @@ export const gardenService = {
     return newPlantPosition;
   },
 
-  /**
-   * Update a plant position in the garden
-   */
-  updatePlantPosition: (gardenId: string, updatedPlantPosition: PlantPosition): void => {
-    const garden = gardenService.getGardenById(gardenId);
-    
-    if (!garden) {
-      throw new Error(`Garden with ID ${gardenId} not found`);
-    }
-    
-    const index = garden.plants.findIndex((p: PlantPosition) => p.id === updatedPlantPosition.id);
-    
-    if (index === -1) {
-      throw new Error(`Plant position with ID ${updatedPlantPosition.id} not found in garden`);
-    }
-    
+ /**
+ * Update a plant position in the garden
+ */
+updatePlantPosition: (gardenId: string, updatedPlantPosition: PlantPosition): void => {
+  const garden = gardenService.getGardenById(gardenId);
+  
+  if (!garden) {
+    throw new Error(`Garden with ID ${gardenId} not found`);
+  }
+  
+  const index = garden.plants.findIndex((p: PlantPosition) => p.id === updatedPlantPosition.id);
+  
+  if (index === -1) {
+    // Instead of throwing an error, just add the plant if it doesn't exist
+    console.warn(`Plant position with ID ${updatedPlantPosition.id} not found in garden, adding it instead`);
+    garden.plants.push(updatedPlantPosition);
+  } else {
     garden.plants[index] = updatedPlantPosition;
-    garden.updatedAt = new Date().toISOString();
-    
-    gardenService.saveGarden(garden);
-  },
+  }
+  
+  garden.updatedAt = new Date().toISOString();
+  
+  gardenService.saveGarden(garden);
+},
 
   /**
    * Remove a plant from the garden

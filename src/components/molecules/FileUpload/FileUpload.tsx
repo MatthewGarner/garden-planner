@@ -1,12 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { 
-  isValidImageType, 
-  isValidFileSize, 
-  validateImageDimensions, 
-  fileToDataUrl,
-  resizeImage
-} from '../../../utils/image';
 import { Button } from '../../atoms';
+import { useFileUpload } from '../../../hooks';
+import { useWindowSize } from '../../../hooks/useWindowSize';
 
 interface FileUploadProps {
   onImageUploaded: (imageDataUrl: string, file: File) => void;
@@ -23,92 +18,35 @@ const FileUpload: React.FC<FileUploadProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { isMobile } = useWindowSize();
   
-  // Check if we're on mobile
+  // Use our custom file upload hook
+  const {
+    image,
+    originalFile,
+    loading,
+    error,
+    progress,
+    handleFileSelect,
+    handleFileDrop,
+    handleDragOver,
+    useCameraCapture
+  } = useFileUpload({
+    maxSizeMB,
+    acceptedFileTypes
+  });
+  
+  // When image is successfully loaded, call the parent component's callback
   React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    if (image && originalFile) {
+      onImageUploaded(image, originalFile);
+    }
+  }, [image, originalFile, onImageUploaded]);
   
-  // Process the file after selection or drop
-  const processFile = async (file: File) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Validate file type
-      if (!isValidImageType(file)) {
-        setError('Please upload a JPEG, PNG, or WebP image');
-        setLoading(false);
-        return false;
-      }
-      
-      // Validate file size
-      if (!isValidFileSize(file, maxSizeMB)) {
-        setError(`Image exceeds ${maxSizeMB}MB limit`);
-        setLoading(false);
-        return false;
-      }
-      
-      // Convert file to data URL
-      const dataUrl = await fileToDataUrl(file);
-      
-      // Validate dimensions
-      const dimensionsValid = await validateImageDimensions(
-        dataUrl,
-        800,  // minWidth
-        600,  // minHeight
-        4000, // maxWidth
-        3000  // maxHeight
-      );
-      
-      if (!dimensionsValid) {
-        setError(`Image must be between 800×600 and 4000×3000 pixels`);
-        setLoading(false);
-        return false;
-      }
-      
-      // Resize image if needed - smaller target on mobile to save bandwidth/memory
-      const maxTargetWidth = isMobile ? 1200 : 2000;
-      const maxTargetHeight = isMobile ? 900 : 1500;
-      const resizedDataUrl = await resizeImage(dataUrl, maxTargetWidth, maxTargetHeight, 0.8);
-      
-      // Call the callback with the processed image
-      onImageUploaded(resizedDataUrl, file);
-      
-      setLoading(false);
-      return true;
-    } catch (err) {
-      console.error('Error processing file:', err);
-      setError('Failed to process image. Please try again.');
-      setLoading(false);
-      return false;
-    }
-  };
-
-  // Handle file drop
-  const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      await processFile(file);
-    }
-  };
-
   // Handle file input change
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      await processFile(file);
+      await handleFileSelect(e.target.files[0]);
     }
   };
 
@@ -118,28 +56,21 @@ const FileUpload: React.FC<FileUploadProps> = ({
       fileInputRef.current.click();
     }
   };
-
-  // Handle drag over
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
+  
+  // Handle drag over to update visual state
+  const onDragEnter = () => {
     setIsDragging(true);
   };
-
-  // Handle device camera for mobile
-  const handleCameraClick = () => {
-    if (fileInputRef.current) {
-      // Set capture attribute to camera for mobile devices
-      fileInputRef.current.setAttribute('capture', 'environment');
-      fileInputRef.current.setAttribute('accept', 'image/*');
-      fileInputRef.current.click();
-      
-      // Reset after click to allow both camera and file selection in future
-      setTimeout(() => {
-        if (fileInputRef.current) {
-          fileInputRef.current.removeAttribute('capture');
-        }
-      }, 100);
-    }
+  
+  // Handle drag leave to update visual state
+  const onDragLeave = () => {
+    setIsDragging(false);
+  };
+  
+  // Handle drop event
+  const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    await handleFileDrop(e);
+    setIsDragging(false);
   };
 
   return (
@@ -149,7 +80,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
           isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'
         }`}
         onDragOver={handleDragOver}
-        onDragLeave={() => setIsDragging(false)}
+        onDragEnter={onDragEnter}
+        onDragLeave={onDragLeave}
         onDrop={onDrop}
       >
         <input
@@ -188,7 +120,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               
               {isMobile && (
                 <Button 
-                  onClick={handleCameraClick} 
+                  onClick={useCameraCapture} 
                   variant="outline"
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
@@ -203,9 +135,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
           </div>
           
           {loading && (
-            <div className="mt-4">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-sm text-gray-500 mt-2">Processing image...</p>
+            <div className="mt-4 w-full">
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <p className="text-sm text-gray-500 mt-2">Processing image: {progress}%</p>
             </div>
           )}
           
@@ -216,7 +153,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           )}
           
           <div className="text-xs text-gray-400 mt-2">
-            JPEG, PNG, WebP • Max {maxSizeMB}MB • Min 800×600px
+            {acceptedFileTypes.map(type => type.split('/')[1]).join(', ')} • Max {maxSizeMB}MB • Min 800×600px
           </div>
         </div>
       </div>
