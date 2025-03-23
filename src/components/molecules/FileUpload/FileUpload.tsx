@@ -25,6 +25,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  // Check if we're on mobile
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Process the file after selection or drop
   const processFile = async (file: File) => {
@@ -34,14 +45,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
     try {
       // Validate file type
       if (!isValidImageType(file)) {
-        setError('Invalid file type. Please upload a JPEG, PNG, or WebP image.');
+        setError('Please upload a JPEG, PNG, or WebP image');
         setLoading(false);
         return false;
       }
       
       // Validate file size
       if (!isValidFileSize(file, maxSizeMB)) {
-        setError(`File size exceeds the maximum limit of ${maxSizeMB}MB.`);
+        setError(`Image exceeds ${maxSizeMB}MB limit`);
         setLoading(false);
         return false;
       }
@@ -59,13 +70,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
       );
       
       if (!dimensionsValid) {
-        setError(`Image dimensions must be between 800×600 and 4000×3000 pixels.`);
+        setError(`Image must be between 800×600 and 4000×3000 pixels`);
         setLoading(false);
         return false;
       }
       
-      // Resize image if needed
-      const resizedDataUrl = await resizeImage(dataUrl, 2000, 1500, 0.8);
+      // Resize image if needed - smaller target on mobile to save bandwidth/memory
+      const maxTargetWidth = isMobile ? 1200 : 2000;
+      const maxTargetHeight = isMobile ? 900 : 1500;
+      const resizedDataUrl = await resizeImage(dataUrl, maxTargetWidth, maxTargetHeight, 0.8);
       
       // Call the callback with the processed image
       onImageUploaded(resizedDataUrl, file);
@@ -112,10 +125,27 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setIsDragging(true);
   };
 
+  // Handle device camera for mobile
+  const handleCameraClick = () => {
+    if (fileInputRef.current) {
+      // Set capture attribute to camera for mobile devices
+      fileInputRef.current.setAttribute('capture', 'environment');
+      fileInputRef.current.setAttribute('accept', 'image/*');
+      fileInputRef.current.click();
+      
+      // Reset after click to allow both camera and file selection in future
+      setTimeout(() => {
+        if (fileInputRef.current) {
+          fileInputRef.current.removeAttribute('capture');
+        }
+      }, 100);
+    }
+  };
+
   return (
     <div className="w-full">
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
           isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'
         }`}
         onDragOver={handleDragOver}
@@ -138,13 +168,38 @@ const FileUpload: React.FC<FileUploadProps> = ({
           </div>
           
           <div className="text-center">
-            <p className="text-lg font-medium text-gray-700 mb-1">{instructionText}</p>
+            <p className="text-lg font-medium text-gray-700 mb-2">{instructionText}</p>
             <p className="text-sm text-gray-500 mb-4">
-              Drag and drop your image here, or click the button below
+              {isMobile 
+                ? "Take a photo or select from your gallery" 
+                : "Drag and drop your image here, or choose an option below"}
             </p>
-            <Button onClick={onButtonClick}>
-              Select Image
-            </Button>
+            
+            <div className={`flex ${isMobile ? 'flex-col space-y-3' : 'flex-row space-x-3'} justify-center`}>
+              <Button 
+                onClick={onButtonClick}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+                Browse Files
+              </Button>
+              
+              {isMobile && (
+                <Button 
+                  onClick={handleCameraClick} 
+                  variant="outline"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Take Photo
+                </Button>
+              )}
+            </div>
           </div>
           
           {loading && (
@@ -155,13 +210,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
           )}
           
           {error && (
-            <div className="mt-4 text-red-500 text-sm">
+            <div className="mt-4 text-red-500 text-sm p-2 bg-red-50 rounded-lg max-w-xs mx-auto">
               {error}
             </div>
           )}
           
           <div className="text-xs text-gray-400 mt-2">
-            Supported formats: JPEG, PNG, WebP • Max size: {maxSizeMB}MB
+            JPEG, PNG, WebP • Max {maxSizeMB}MB • Min 800×600px
           </div>
         </div>
       </div>

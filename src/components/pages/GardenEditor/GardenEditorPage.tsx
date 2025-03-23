@@ -12,9 +12,30 @@ const GardenEditorPage: React.FC = () => {
   const [garden, setGarden] = useState<Garden | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Default closed on mobile
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [isUnsaved, setIsUnsaved] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  
+  // Update isMobileView on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const newIsMobileView = window.innerWidth < 768;
+      setIsMobileView(newIsMobileView);
+      
+      // Automatically open sidebar on desktop if it was closed
+      if (!newIsMobileView && !isSidebarOpen) {
+        setIsSidebarOpen(true);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial check
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isSidebarOpen]);
   
   useEffect(() => {
     const loadGarden = () => {
@@ -54,6 +75,11 @@ const GardenEditorPage: React.FC = () => {
   // Handle adding a plant to the garden
   const handleAddPlantToGarden = (plant: Plant) => {
     setSelectedPlant(plant);
+    
+    // On mobile, close the sidebar when a plant is selected for placement
+    if (isMobileView) {
+      setIsSidebarOpen(false);
+    }
   };
 
   // Handle plant placement on the canvas
@@ -71,7 +97,7 @@ const GardenEditorPage: React.FC = () => {
       }
       
       setSelectedPlant(null);
-      setIsUnsaved(false);
+      setIsUnsaved(true);
     } catch (err) {
       console.error('Error adding plant to garden:', err);
     }
@@ -190,60 +216,146 @@ const GardenEditorPage: React.FC = () => {
   
   return (
     <MainLayout>
-      <div className="flex h-[calc(100vh-64px)]">
-        {/* Sidebar with plant selection */}
-        <div 
-          className={`${isSidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 h-full border-r overflow-hidden`}
-        >
-          {isSidebarOpen && (
-            <GardenPlantSelector
-              onAddPlantToGarden={handleAddPlantToGarden}
-              viewTime={garden.viewTime}
-            />
-          )}
-        </div>
-        
-        {/* Main garden editor area */}
-        <div className="flex-1 flex flex-col">
-          {/* Header with controls */}
-          <div className="bg-white shadow-sm p-4 flex justify-between items-center">
+      <div className="flex flex-col h-[calc(100vh-64px)]">
+        {/* Mobile Header */}
+        <div className="bg-white shadow-sm p-4 flex justify-between items-center">
+          <div className="flex items-center">
+            <button 
+              className="mr-4 p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
+              onClick={toggleSidebar}
+              title={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
+              aria-label={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isSidebarOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+            <h1 className="text-xl font-bold truncate max-w-[150px] md:max-w-xs">{garden.name}</h1>
+            {isUnsaved && (
+              <span className="ml-2 text-sm text-gray-500 hidden sm:inline">(Unsaved changes)</span>
+            )}
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {/* Time view selector - simplified on mobile */}
             <div className="flex items-center">
-              <button 
-                className="mr-4 p-1.5 rounded hover:bg-gray-100"
-                onClick={toggleSidebar}
-                title={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
+              <select 
+                value={garden.viewTime}
+                onChange={(e) => handleViewTimeChange(e.target.value as Garden['viewTime'])}
+                className="input py-1.5 px-2 text-sm rounded-md"
+                aria-label="Growth timeline"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {isSidebarOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                  )}
-                </svg>
-              </button>
-              <h1 className="text-xl font-bold">{garden.name}</h1>
-              {isUnsaved && (
-                <span className="ml-2 text-sm text-gray-500">(Unsaved changes)</span>
-              )}
+                <option value="current">Now</option>
+                <option value="year3">3 Yrs</option>
+                <option value="year5">5 Yrs</option>
+                <option value="mature">Mature</option>
+              </select>
             </div>
             
-            <div className="flex items-center space-x-4">
-              {/* Time view selector */}
-              <div className="flex items-center">
-                <span className="text-sm mr-2 text-gray-600">Growth:</span>
-                <select 
-                  value={garden.viewTime}
-                  onChange={(e) => handleViewTimeChange(e.target.value as Garden['viewTime'])}
-                  className="input py-1"
-                >
-                  <option value="current">Just Planted</option>
-                  <option value="year3">3 Years</option>
-                  <option value="year5">5 Years</option>
-                  <option value="mature">Mature</option>
-                </select>
-              </div>
+            <div className="flex space-x-2">
+              {/* Save button always visible, scale button only on larger screens */}
+              <Button 
+                variant="primary"
+                size="sm"
+                onClick={handleSaveGarden}
+                disabled={!isUnsaved}
+                className="whitespace-nowrap"
+              >
+                Save
+              </Button>
               
-              <div className="flex space-x-2">
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/garden/${gardenId}/scale`)}
+                className="whitespace-nowrap hidden sm:inline-flex"
+              >
+                Edit Scale
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar with plant selection - slide in on mobile, fixed on desktop */}
+          <div 
+            className={`${
+              isMobileView 
+                ? `fixed inset-y-0 left-0 z-30 w-80 bg-white transform transition-transform duration-300 ease-in-out ${
+                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                  }`
+                : `${isSidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 h-full border-r overflow-hidden`
+            }`}
+            style={{ top: isMobileView ? '64px' : '0' }}
+          >
+            {isSidebarOpen && (
+              <div className="h-full flex flex-col">
+                <div className="flex-1 overflow-auto">
+                  <GardenPlantSelector
+                    onAddPlantToGarden={handleAddPlantToGarden}
+                    viewTime={garden.viewTime}
+                  />
+                </div>
+                
+                {/* Mobile-only close button at bottom */}
+                {isMobileView && (
+                  <div className="p-4 border-t">
+                    <Button 
+                      variant="outline" 
+                      fullWidth 
+                      onClick={toggleSidebar}
+                    >
+                      Close Plant Selection
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Overlay to close sidebar on mobile */}
+          {isMobileView && isSidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-20"
+              onClick={toggleSidebar}
+              aria-hidden="true"
+              style={{ top: '64px' }}
+            />
+          )}
+          
+          {/* Main garden editor area */}
+          <div className="flex-1 flex flex-col bg-gray-100 overflow-auto">
+            {/* Garden canvas */}
+            <div className="flex-1 p-4">
+              <GardenCanvas
+                garden={garden}
+                selectedPlant={selectedPlant}
+                onPlantPlaced={handlePlantPlaced}
+                onPlantUpdate={handlePlantUpdate}
+                onPlantRemove={handlePlantRemove}
+                onCancelPlacement={handleCancelPlacement}
+              />
+            </div>
+            
+            {/* Mobile bottom action bar */}
+            {isMobileView && !isSidebarOpen && (
+              <div className="bg-white border-t p-3 flex justify-between items-center">
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleSidebar}
+                  className="flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Plants
+                </Button>
+                
                 <Button 
                   variant="outline"
                   size="sm"
@@ -251,28 +363,8 @@ const GardenEditorPage: React.FC = () => {
                 >
                   Edit Scale
                 </Button>
-                <Button 
-                  variant="primary"
-                  size="sm"
-                  onClick={handleSaveGarden}
-                  disabled={!isUnsaved}
-                >
-                  Save Garden
-                </Button>
               </div>
-            </div>
-          </div>
-          
-          {/* Garden canvas */}
-          <div className="flex-1 bg-gray-100 overflow-auto p-4">
-            <GardenCanvas
-              garden={garden}
-              selectedPlant={selectedPlant}
-              onPlantPlaced={handlePlantPlaced}
-              onPlantUpdate={handlePlantUpdate}
-              onPlantRemove={handlePlantRemove}
-              onCancelPlacement={handleCancelPlacement}
-            />
+            )}
           </div>
         </div>
       </div>

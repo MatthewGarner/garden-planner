@@ -30,9 +30,23 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
   const plantRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [isResizing, setIsResizing] = useState(false);
   const [rotation, setRotation] = useState(position.rotation);
   const [scale, setScale] = useState(position.scale);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   // Get the plant dimensions based on the current viewTime
   const getPlantDimensions = () => {
@@ -72,16 +86,21 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
     return (pixels / (dimension === 'width' ? containerWidth : containerHeight)) * 100;
   };
 
-  // Handle mouse down on plant for dragging
-  const handleMouseDown = (e: React.MouseEvent) => {
+  // Handle mouse/touch down on plant for dragging
+  const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
     
     if (!plantRef.current) return;
     
+    // Capture pointer to ensure events are delivered
+    if (e.target instanceof Element) {
+      e.target.setPointerCapture(e.pointerId);
+    }
+    
     // Select this plant
     onSelect(position.id);
     
-    // Calculate the offset between mouse position and plant position
+    // Calculate the offset between pointer position and plant position
     const plantRect = plantRef.current.getBoundingClientRect();
     setDragOffset({
       x: e.clientX - plantRect.left,
@@ -91,46 +110,38 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
     setIsDragging(true);
   };
 
-  // Handle mouse move for dragging
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !plantRef.current) return;
-      
-      // Calculate new position in pixels
-      const containerRect = plantRef.current.parentElement?.getBoundingClientRect();
-      if (!containerRect) return;
-      
-      const newX = e.clientX - containerRect.left - dragOffset.x;
-      const newY = e.clientY - containerRect.top - dragOffset.y;
-      
-      // Convert to percentage of container
-      const newXPercent = pixelsToPercent(newX, 'width');
-      const newYPercent = pixelsToPercent(newY, 'height');
-      
-      // Update position
-      const updatedPosition = {
-        ...position,
-        x: Math.max(0, Math.min(100, newXPercent)),
-        y: Math.max(0, Math.min(100, newYPercent))
-      };
-      
-      onPositionChange(updatedPosition);
+  // Handle pointer move for dragging
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging || !plantRef.current) return;
+    
+    // Calculate new position in pixels
+    const containerRect = plantRef.current.parentElement?.getBoundingClientRect();
+    if (!containerRect) return;
+    
+    const newX = e.clientX - containerRect.left - dragOffset.x;
+    const newY = e.clientY - containerRect.top - dragOffset.y;
+    
+    // Convert to percentage of container
+    const newXPercent = pixelsToPercent(newX, 'width');
+    const newYPercent = pixelsToPercent(newY, 'height');
+    
+    // Update position
+    const updatedPosition = {
+      ...position,
+      x: Math.max(0, Math.min(100, newXPercent)),
+      y: Math.max(0, Math.min(100, newYPercent))
     };
     
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-    
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+    onPositionChange(updatedPosition);
+  };
+
+  // Handle pointer up to end dragging
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (e.target instanceof Element) {
+      e.target.releasePointerCapture(e.pointerId);
     }
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset, position, onPositionChange, containerWidth, containerHeight]);
+    setIsDragging(false);
+  };
 
   // Handle rotation change
   const handleRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,7 +170,7 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
   };
 
   // Handle delete button click
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     onDelete(position.id);
   };
@@ -174,7 +185,7 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
   return (
     <div
       ref={plantRef}
-      className={`absolute cursor-move transition-shadow ${isSelected ? 'z-10' : ''}`}
+      className={`absolute touch-manipulation ${isDragging ? 'z-30' : isSelected ? 'z-20' : ''}`}
       style={{
         left: `${position.x}%`,
         top: `${position.y}%`,
@@ -182,13 +193,21 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
         height: `${plantSize.height}px`,
         transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
         transformOrigin: 'center',
-        zIndex: position.zIndex
+        zIndex: position.zIndex,
+        cursor: 'move',
+        WebkitTapHighlightColor: 'transparent' // Remove tap highlight on mobile
       }}
-      onMouseDown={handleMouseDown}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(position.id);
+      }}
     >
       {/* Plant image placeholder */}
       <div 
-        className={`w-full h-full rounded-full overflow-hidden border-2 ${
+        className={`w-full h-full rounded-full overflow-hidden border-2 transition-all ${
           isSelected ? 'border-primary shadow-lg' : 'border-transparent'
         }`}
         style={{
@@ -201,25 +220,26 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
       
       {/* Plant name and controls (visible when selected) */}
       {isSelected && (
-        <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-md p-2 w-40">
-          <div className="text-xs font-medium text-center mb-1 truncate">{plant.name}</div>
+        <div className={`absolute ${isMobile ? 'bottom-full left-1/2 -translate-x-1/2 -translate-y-2 mb-1' : '-bottom-16 left-1/2 transform -translate-x-1/2'} bg-white rounded-lg shadow-md p-2 min-w-[11rem] w-max z-30`}>
+          <div className="text-xs font-medium text-center mb-2 truncate max-w-full">{plant.name}</div>
           
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs">Rotate:</span>
+              <span className="text-xs mr-2">Rotate:</span>
               <input
                 type="range"
                 min="0"
                 max="359"
                 value={rotation}
                 onChange={handleRotationChange}
-                className="w-20"
+                className="w-20 h-5"
                 onClick={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
               />
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="text-xs">Size:</span>
+              <span className="text-xs mr-2">Size:</span>
               <input
                 type="range"
                 min="0.5"
@@ -227,14 +247,16 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
                 step="0.1"
                 value={scale}
                 onChange={handleScaleChange}
-                className="w-20"
+                className="w-20 h-5"
                 onClick={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
               />
             </div>
             
             <button
-              className="w-full bg-red-100 hover:bg-red-200 text-red-600 text-xs px-2 py-1 rounded"
+              className="w-full bg-red-100 hover:bg-red-200 text-red-600 text-xs px-2 py-2 rounded min-h-[44px] touch-manipulation"
               onClick={handleDelete}
+              aria-label="Remove plant"
             >
               Remove
             </button>
