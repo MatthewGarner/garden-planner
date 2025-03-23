@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { Plant, PlantPosition, ScaleReference } from '../../../types';
-import { plantService } from '../../../services';
+import { getPlantDimensionsForViewTime } from '../../../utils/plantutils';
+import { useWindowSize } from '../../../hooks/useWindowSize';
 
 interface DraggablePlantProps {
   plant: Plant;
@@ -32,62 +33,57 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(position.rotation);
   const [scale, setScale] = useState(position.scale);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Check if device is mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-    };
-  }, []);
-
-  // Get the plant dimensions based on the current viewTime
-  const getPlantDimensions = () => {
-    const { initialYear, threeYears, fiveYears, mature } = plant.dimensions;
-    
-    switch (viewTime) {
-      case 'year3':
-        return threeYears;
-      case 'year5':
-        return fiveYears;
-      case 'mature':
-        return mature;
-      case 'current':
-      default:
-        return initialYear;
-    }
-  };
+  const { isMobile } = useWindowSize();
 
   // Calculate plant size in pixels based on real-world dimensions and scale
-  const calculateSizeInPixels = () => {
-    const plantDimensions = getPlantDimensions();
+  const calculateSizeInPixels = useCallback(() => {
+    const plantDimensions = getPlantDimensionsForViewTime(plant, viewTime);
     
     // Convert from inches to pixels using the scaleReference
     const widthInPixels = plantDimensions.width * scaleReference.pixelsPerInch * scale;
     const heightInPixels = plantDimensions.height * scaleReference.pixelsPerInch * scale;
     
     return { width: widthInPixels, height: heightInPixels };
-  };
+  }, [plant, viewTime, scaleReference.pixelsPerInch, scale]);
 
   // Convert position from percentage to pixels
-  const percentToPixels = (percent: number, dimension: 'width' | 'height') => {
+  const percentToPixels = useCallback((percent: number, dimension: 'width' | 'height'): number => {
     return (percent / 100) * (dimension === 'width' ? containerWidth : containerHeight);
-  };
+  }, [containerWidth, containerHeight]);
 
   // Convert position from pixels to percentage
-  const pixelsToPercent = (pixels: number, dimension: 'width' | 'height') => {
+  const pixelsToPercent = useCallback((pixels: number, dimension: 'width' | 'height'): number => {
     return (pixels / (dimension === 'width' ? containerWidth : containerHeight)) * 100;
-  };
+  }, [containerWidth, containerHeight]);
 
-  // Handle mouse/touch down on plant for dragging
-  const handlePointerDown = (e: React.PointerEvent) => {
+  // Handle rotation change
+  const handleRotationChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newRotation = parseInt(e.target.value, 10);
+    setRotation(newRotation);
+    
+    const updatedPosition = {
+      ...position,
+      rotation: newRotation
+    };
+    
+    onPositionChange(updatedPosition);
+  }, [position, onPositionChange]);
+
+  // Handle scale change
+  const handleScaleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newScale = parseFloat(e.target.value);
+    setScale(newScale);
+    
+    const updatedPosition = {
+      ...position,
+      scale: newScale
+    };
+    
+    onPositionChange(updatedPosition);
+  }, [position, onPositionChange]);
+
+  // Handle pointer down for drag operation
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
     
     if (!plantRef.current) return;
@@ -108,10 +104,10 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
     });
     
     setIsDragging(true);
-  };
+  }, [position.id, onSelect]);
 
   // Handle pointer move for dragging
-  const handlePointerMove = (e: React.PointerEvent) => {
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDragging || !plantRef.current) return;
     
     // Calculate new position in pixels
@@ -133,54 +129,24 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
     };
     
     onPositionChange(updatedPosition);
-  };
+  }, [isDragging, dragOffset, position, pixelsToPercent, onPositionChange]);
 
   // Handle pointer up to end dragging
-  const handlePointerUp = (e: React.PointerEvent) => {
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (e.target instanceof Element) {
       e.target.releasePointerCapture(e.pointerId);
     }
     setIsDragging(false);
-  };
-
-  // Handle rotation change
-  const handleRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newRotation = parseInt(e.target.value);
-    setRotation(newRotation);
-    
-    const updatedPosition = {
-      ...position,
-      rotation: newRotation
-    };
-    
-    onPositionChange(updatedPosition);
-  };
-
-  // Handle scale change
-  const handleScaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newScale = parseFloat(e.target.value);
-    setScale(newScale);
-    
-    const updatedPosition = {
-      ...position,
-      scale: newScale
-    };
-    
-    onPositionChange(updatedPosition);
-  };
+  }, []);
 
   // Handle delete button click
-  const handleDelete = (e: React.MouseEvent | React.TouchEvent) => {
+  const handleDelete = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     onDelete(position.id);
-  };
+  }, [position.id, onDelete]);
 
   // Calculate plant size in pixels
   const plantSize = calculateSizeInPixels();
-
-  // Get plant position in pixels
-  const plantX = percentToPixels(position.x, 'width');
-  const plantY = percentToPixels(position.y, 'height');
 
   return (
     <div
@@ -267,4 +233,5 @@ const DraggablePlant: React.FC<DraggablePlantProps> = ({
   );
 };
 
-export default DraggablePlant;
+// Memoize the component to prevent unnecessary re-renders
+export default memo(DraggablePlant);

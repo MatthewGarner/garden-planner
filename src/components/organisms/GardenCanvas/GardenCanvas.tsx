@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Garden, Plant, PlantPosition } from '../../../types';
-import { DraggablePlant } from '../../molecules';
-import { plantService } from '../../../services';
+import DraggablePlant from '../../molecules/DraggablePlant/DraggablePlant';
+import { useGarden } from '../../../contexts/GardenContext';
 import { inchesToPixels } from '../../../utils/scale';
 import { useToast } from '../../molecules/Toast/ToastProvider';
 import { useConfirmation } from '../../molecules/ConfirmationDialog/ConfirmationProvider';
+import { getPlantDimensionsForViewTime } from '../../../utils/plantutils';
 
 interface GardenCanvasProps {
   garden: Garden;
@@ -32,7 +33,8 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredCoordinates, setHoveredCoordinates] = useState<{x: number, y: number} | null>(null);
   
-  // Access toast and confirmation dialogs
+  // Access garden context, toast and confirmation dialogs
+  const { getPlantById } = useGarden();
   const { addToast } = useToast();
   const { showConfirmation } = useConfirmation();
   
@@ -97,24 +99,8 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
     const xPercent = (x / rect.width) * 100;
     const yPercent = (y / rect.height) * 100;
     
-    // Get the plant's dimensions based on current view time
-    const getDimensions = () => {
-      const { initialYear, threeYears, fiveYears, mature } = selectedPlant.dimensions;
-      
-      switch (garden.viewTime) {
-        case 'year3':
-          return threeYears;
-        case 'year5':
-          return fiveYears;
-        case 'mature':
-          return mature;
-        case 'current':
-        default:
-          return initialYear;
-      }
-    };
-    
-    const plantDimensions = getDimensions();
+    // Get plant dimensions based on view time
+    const plantDimensions = getPlantDimensionsForViewTime(selectedPlant, garden.viewTime);
     
     // Calculate the plant's width and height in pixels
     const { width: widthInPixels, height: heightInPixels } = 
@@ -189,7 +175,7 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
     const plantPosition = garden.plants.find(p => p.id === id);
     if (!plantPosition) return;
     
-    const plant = plantService.getPlantById(plantPosition.plantId);
+    const plant = getPlantById(plantPosition.plantId);
     if (!plant) return;
     
     showConfirmation({
@@ -212,7 +198,7 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
         }
       }
     });
-  }, [garden.plants, onPlantRemove, showConfirmation, addToast]);
+  }, [garden.plants, onPlantRemove, getPlantById, showConfirmation, addToast]);
   
   // Cancel plant placement on ESC key
   useEffect(() => {
@@ -228,33 +214,12 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isPlacingPlant, onCancelPlacement]);
   
-  // Helper function to get plant by ID
-  const getPlantById = useCallback((id: string): Plant | undefined => {
-    return plantService.getPlantById(id);
-  }, []);
-  
   // Calculate placement preview dimensions
   const placementPreview = useMemo(() => {
     if (!selectedPlant || !hoveredCoordinates || !garden.scaleReference) return null;
     
-    // Get the plant's dimensions based on current view time
-    const getDimensions = () => {
-      const { initialYear, threeYears, fiveYears, mature } = selectedPlant.dimensions;
-      
-      switch (garden.viewTime) {
-        case 'year3':
-          return threeYears;
-        case 'year5':
-          return fiveYears;
-        case 'mature':
-          return mature;
-        case 'current':
-        default:
-          return initialYear;
-      }
-    };
-    
-    const plantDimensions = getDimensions();
+    // Get plant dimensions based on view time
+    const plantDimensions = getPlantDimensionsForViewTime(selectedPlant, garden.viewTime);
     
     // Calculate width and height in pixels
     const { width, height } = inchesToPixels(plantDimensions, {
@@ -270,6 +235,42 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
       y: hoveredCoordinates.y - height / 2
     };
   }, [selectedPlant, hoveredCoordinates, garden.scaleReference, garden.viewTime]);
+  
+  // Memoize the list of plants to avoid unnecessary re-renders
+  const renderedPlants = useMemo(() => {
+    if (!garden.scaleReference) return null;
+    
+    return garden.plants.map(plantPosition => {
+      const plant = getPlantById(plantPosition.plantId);
+      if (!plant) return null;
+      
+      return (
+        <DraggablePlant
+          key={plantPosition.id}
+          plant={plant}
+          position={plantPosition}
+          scaleReference={garden.scaleReference!}
+          containerWidth={canvasSize.width}
+          containerHeight={canvasSize.height}
+          viewTime={garden.viewTime}
+          isSelected={selectedPlantPosition === plantPosition.id}
+          onSelect={handlePlantSelect}
+          onPositionChange={handlePlantPositionChange}
+          onDelete={handlePlantDelete}
+        />
+      );
+    });
+  }, [
+    garden.plants, 
+    garden.scaleReference, 
+    garden.viewTime, 
+    canvasSize, 
+    selectedPlantPosition, 
+    getPlantById,
+    handlePlantSelect, 
+    handlePlantPositionChange, 
+    handlePlantDelete
+  ]);
   
   return (
     <div 
@@ -324,26 +325,7 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
       )}
       
       {/* Placed plants */}
-      {garden.plants.map(plantPosition => {
-        const plant = getPlantById(plantPosition.plantId);
-        if (!plant || !garden.scaleReference) return null;
-        
-        return (
-          <DraggablePlant
-            key={plantPosition.id}
-            plant={plant}
-            position={plantPosition}
-            scaleReference={garden.scaleReference}
-            containerWidth={canvasSize.width}
-            containerHeight={canvasSize.height}
-            viewTime={garden.viewTime}
-            isSelected={selectedPlantPosition === plantPosition.id}
-            onSelect={handlePlantSelect}
-            onPositionChange={handlePlantPositionChange}
-            onDelete={handlePlantDelete}
-          />
-        );
-      })}
+      {renderedPlants}
       
       {/* Garden dimensions and scale info */}
       <div className="absolute top-2 left-2 bg-white bg-opacity-80 p-2 rounded text-xs backdrop-blur-sm transition-opacity duration-300 hover:bg-opacity-100">
@@ -373,35 +355,5 @@ const GardenCanvas: React.FC<GardenCanvasProps> = ({
     </div>
   );
 };
-
-// Add animation styles
-const injectStyles = () => {
-  if (typeof document !== 'undefined') {
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-      @keyframes pulse-subtle {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-        100% { transform: scale(1); }
-      }
-      .animate-pulse-subtle {
-        animation: pulse-subtle 2s infinite ease-in-out;
-      }
-      @keyframes fade-in {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      .animate-fade-in {
-        animation: fade-in 0.3s ease-out;
-      }
-    `;
-    document.head.appendChild(styleElement);
-  }
-};
-
-// Call this function when the component mounts
-if (typeof window !== 'undefined') {
-  injectStyles();
-}
 
 export default GardenCanvas;

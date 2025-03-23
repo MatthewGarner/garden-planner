@@ -1,9 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoadingScreen from './components/molecules/LoadingScreen/LoadingScreen'; // Corrected path
+import LoadingScreen from './components/molecules/LoadingScreen/LoadingScreen';
 import ToastProvider from './components/molecules/Toast/ToastProvider';
 import ConfirmationProvider from './components/molecules/ConfirmationDialog/ConfirmationProvider';
-import ErrorBoundary from './components/molecules/ErrorBoundary'; // Adjusted path
+import ErrorBoundary from './components/molecules/ErrorBoundary';
+import { GardenProvider } from './contexts/GardenContext';
 
 // Lazy-loaded page components
 const HomePage = lazy(() => import('./components/pages/Home'));
@@ -17,19 +18,21 @@ function App() {
     <ErrorBoundary>
       <ToastProvider>
         <ConfirmationProvider>
-          <Router>
-            <Suspense fallback={<LoadingScreen />}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/plants" element={<PlantBrowserPage />} />
-                <Route path="/garden/new" element={<GardenUploadPage />} />
-                <Route path="/garden/:gardenId" element={<GardenEditorPage />} />
-                <Route path="/garden/:gardenId/scale" element={<GardenScalingPage />} />
-                <Route path="/garden" element={<Navigate replace to="/garden/new" />} />
-                <Route path="*" element={<ErrorPage />} />
-              </Routes>
-            </Suspense>
-          </Router>
+          <GardenProvider>
+            <Router>
+              <Suspense fallback={<LoadingScreen />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/plants" element={<PlantBrowserPage />} />
+                  <Route path="/garden/new" element={<GardenUploadPage />} />
+                  <Route path="/garden/:gardenId" element={<GardenEditorPage />} />
+                  <Route path="/garden/:gardenId/scale" element={<GardenScalingPage />} />
+                  <Route path="/garden" element={<Navigate replace to="/garden/new" />} />
+                  <Route path="*" element={<ErrorPage />} />
+                </Routes>
+              </Suspense>
+            </Router>
+          </GardenProvider>
         </ConfirmationProvider>
       </ToastProvider>
     </ErrorBoundary>
