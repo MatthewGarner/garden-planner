@@ -1,5 +1,11 @@
 import React, { useRef, useState } from 'react';
-import { useImageUpload } from '../../../hooks';
+import { 
+  isValidImageType, 
+  isValidFileSize, 
+  validateImageDimensions, 
+  fileToDataUrl,
+  resizeImage
+} from '../../../utils/image';
 import { Button } from '../../atoms';
 
 interface FileUploadProps {
@@ -17,32 +23,71 @@ const FileUpload: React.FC<FileUploadProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const { 
-    image, 
-    originalFile, 
-    loading, 
-    error, 
-    handleFileSelect, 
-    handleFileDrop, 
-    handleDragOver,
-    clearImage 
-  } = useImageUpload({
-    maxSizeMB,
-    minWidth: 800,
-    minHeight: 600,
-    maxWidth: 4000,
-    maxHeight: 3000,
-    autoResize: true
-  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Process the file after selection or drop
+  const processFile = async (file: File) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Validate file type
+      if (!isValidImageType(file)) {
+        setError('Invalid file type. Please upload a JPEG, PNG, or WebP image.');
+        setLoading(false);
+        return false;
+      }
+      
+      // Validate file size
+      if (!isValidFileSize(file, maxSizeMB)) {
+        setError(`File size exceeds the maximum limit of ${maxSizeMB}MB.`);
+        setLoading(false);
+        return false;
+      }
+      
+      // Convert file to data URL
+      const dataUrl = await fileToDataUrl(file);
+      
+      // Validate dimensions
+      const dimensionsValid = await validateImageDimensions(
+        dataUrl,
+        800,  // minWidth
+        600,  // minHeight
+        4000, // maxWidth
+        3000  // maxHeight
+      );
+      
+      if (!dimensionsValid) {
+        setError(`Image dimensions must be between 800×600 and 4000×3000 pixels.`);
+        setLoading(false);
+        return false;
+      }
+      
+      // Resize image if needed
+      const resizedDataUrl = await resizeImage(dataUrl, 2000, 1500, 0.8);
+      
+      // Call the callback with the processed image
+      onImageUploaded(resizedDataUrl, file);
+      
+      setLoading(false);
+      return true;
+    } catch (err) {
+      console.error('Error processing file:', err);
+      setError('Failed to process image. Please try again.');
+      setLoading(false);
+      return false;
+    }
+  };
 
   // Handle file drop
   const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    const success = await handleFileDrop(e);
     
-    if (success && image && originalFile) {
-      onImageUploaded(image, originalFile);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      await processFile(file);
     }
   };
 
@@ -50,11 +95,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      const success = await handleFileSelect(file);
-      
-      if (success && image) {
-        onImageUploaded(image, file);
-      }
+      await processFile(file);
     }
   };
 
@@ -65,17 +106,19 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
+  // Handle drag over
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
   return (
     <div className="w-full">
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'
         }`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragging(true);
-          handleDragOver(e);
-        }}
+        onDragOver={handleDragOver}
         onDragLeave={() => setIsDragging(false)}
         onDrop={onDrop}
       >

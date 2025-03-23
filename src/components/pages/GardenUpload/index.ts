@@ -1,2 +1,2 @@
-import GardenUploadPage from './GardenUploadPage';
-export default GardenUploadPage;
+import GardenUpload from './GardenUploadPage';
+export default GardenUpload;
