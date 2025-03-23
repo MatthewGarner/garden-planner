@@ -49,8 +49,8 @@ yarn start
 src/
 ├── components/          # React components using atomic design
 │   ├── atoms/           # Basic building blocks (Button, etc.)
-│   ├── molecules/       # Combinations of atoms (PlantCard, PlantDetailsPanel, etc.)
-│   ├── organisms/       # Complex components (Header, PlantGallery, GardenPlantSelector, etc.)
+│   ├── molecules/       # Combinations of atoms (PlantCard, DraggablePlant, etc.)
+│   ├── organisms/       # Complex components (Header, GardenCanvas, etc.)
 │   ├── templates/       # Page layouts (MainLayout)
 │   └── pages/           # Complete pages (HomePage, GardenEditorPage, etc.)
 ├── hooks/               # Custom React hooks
@@ -69,9 +69,9 @@ src/
 3. ✅ Garden photo upload functionality
 4. ✅ Garden scaling system
 5. ✅ Plant selection interface
-6. ❌ Plant placement system
-7. ❌ Growth visualization
-8. ❌ Garden plan saving
+6. ✅ Plant placement system
+7. ✅ Growth visualization
+8. ❌ Garden plan saving (in progress)
 9. ❌ Mobile responsiveness
 10. ❌ Final polish and optimizations
 
@@ -93,11 +93,17 @@ The project now has:
   - Filter by various criteria (sun, water, size, etc.)
   - View detailed plant information
   - Select plants for placement
-- Time slider to visualize plants at different growth stages
-- Navigation between all pages
-- Local storage for saving garden data
+- Plant placement system:
+  - Place plants by clicking on the garden
+  - Drag plants to reposition them
+  - Adjust size and rotation
+  - Delete plants from the garden
+- Growth visualization:
+  - Time slider to see plants at different growth stages
+  - Automatic sizing based on plant age
+  - Realistic proportions based on reference objects
 
-The next step will focus on implementing the plant placement functionality, which will allow users to position selected plants on their garden image.
+The next step will focus on enhancing the garden plan saving system, implementing mobile responsiveness, and adding final polish to the application.
 
 ## Browser Support
 
