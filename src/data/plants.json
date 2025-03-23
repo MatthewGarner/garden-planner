@@ -1,0 +1,97 @@
+[
+    {
+      "id": "plant-001",
+      "name": "Lavender",
+      "scientificName": "Lavandula angustifolia",
+      "description": "A fragrant herb with purple flowers, known for its calming scent and drought tolerance.",
+      "category": "perennial",
+      "sunExposure": "full-sun",
+      "waterNeeds": "low",
+      "dimensions": {
+        "mature": { "height": 36, "width": 36 },
+        "initialYear": { "height": 12, "width": 12 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Lavender", "alt": "Lavender plant" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Lavender", "alt": "Lavender plant" }
+      },
+      "tags": ["aromatic", "drought-tolerant", "bee-friendly"]
+    },
+    {
+      "id": "plant-002",
+      "name": "Japanese Maple",
+      "scientificName": "Acer palmatum",
+      "description": "A small ornamental tree with delicate, deeply cut leaves that turn vibrant red in fall.",
+      "category": "tree",
+      "sunExposure": "partial-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 240, "width": 240 },
+        "initialYear": { "height": 48, "width": 36 }
+      },
+      "growthRate": "slow",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Japanese+Maple", "alt": "Japanese Maple tree" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Japanese+Maple", "alt": "Japanese Maple tree" }
+      },
+      "tags": ["ornamental", "fall-color", "shade"]
+    },
+    {
+      "id": "plant-003",
+      "name": "Hydrangea",
+      "scientificName": "Hydrangea macrophylla",
+      "description": "A flowering shrub with large, showy blooms that change color based on soil pH.",
+      "category": "shrub",
+      "sunExposure": "partial-sun",
+      "waterNeeds": "high",
+      "dimensions": {
+        "mature": { "height": 60, "width": 60 },
+        "initialYear": { "height": 24, "width": 24 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Hydrangea", "alt": "Hydrangea shrub" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Hydrangea", "alt": "Hydrangea shrub" }
+      },
+      "tags": ["flowering", "shade-tolerant", "cottage"]
+    },
+    {
+      "id": "plant-004",
+      "name": "Rosemary",
+      "scientificName": "Salvia rosmarinus",
+      "description": "An aromatic, evergreen herb used in cooking and known for its pine-like fragrance.",
+      "category": "herb",
+      "sunExposure": "full-sun",
+      "waterNeeds": "low",
+      "dimensions": {
+        "mature": { "height": 48, "width": 36 },
+        "initialYear": { "height": 12, "width": 12 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Rosemary", "alt": "Rosemary plant" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Rosemary", "alt": "Rosemary plant" }
+      },
+      "tags": ["edible", "aromatic", "drought-tolerant", "evergreen"]
+    },
+    {
+      "id": "plant-005",
+      "name": "Boxwood",
+      "scientificName": "Buxus sempervirens",
+      "description": "A dense evergreen shrub often used for hedges, borders, and formal gardens.",
+      "category": "shrub",
+      "sunExposure": "partial-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 72, "width": 72 },
+        "initialYear": { "height": 18, "width": 18 }
+      },
+      "growthRate": "slow",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Boxwood", "alt": "Boxwood shrub" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Boxwood", "alt": "Boxwood shrub" }
+      },
+      "tags": ["evergreen", "hedge", "formal", "topiary"]
+    }
+  ]
