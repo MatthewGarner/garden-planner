@@ -49,10 +49,10 @@ yarn start
 src/
 ├── components/          # React components using atomic design
 │   ├── atoms/           # Basic building blocks (Button, etc.)
-│   ├── molecules/       # Combinations of atoms (PlantCard, FileUpload, ReferenceObject, etc.)
-│   ├── organisms/       # Complex components (Header, PlantGallery, GardenUpload, etc.)
+│   ├── molecules/       # Combinations of atoms (PlantCard, PlantDetailsPanel, etc.)
+│   ├── organisms/       # Complex components (Header, PlantGallery, GardenPlantSelector, etc.)
 │   ├── templates/       # Page layouts (MainLayout)
-│   └── pages/           # Complete pages (HomePage, PlantBrowserPage, GardenScalingPage, etc.)
+│   └── pages/           # Complete pages (HomePage, GardenEditorPage, etc.)
 ├── hooks/               # Custom React hooks
 ├── services/            # Services for data operations
 ├── utils/               # Utility functions
@@ -68,7 +68,7 @@ src/
 2. ✅ Plant database implementation 
 3. ✅ Garden photo upload functionality
 4. ✅ Garden scaling system
-5. ❌ Plant selection interface
+5. ✅ Plant selection interface
 6. ❌ Plant placement system
 7. ❌ Growth visualization
 8. ❌ Garden plan saving
@@ -88,10 +88,16 @@ The project now has:
   - Reference object placement for accurate scaling
   - Conversion between pixels and real-world dimensions
   - Scale calculation based on reference objects
-- Navigation between pages
+- Plant selection interface:
+  - Browse and search plants
+  - Filter by various criteria (sun, water, size, etc.)
+  - View detailed plant information
+  - Select plants for placement
+- Time slider to visualize plants at different growth stages
+- Navigation between all pages
 - Local storage for saving garden data
 
-The next step will focus on implementing the plant selection interface and plant placement functionality.
+The next step will focus on implementing the plant placement functionality, which will allow users to position selected plants on their garden image.
 
 ## Browser Support
 
