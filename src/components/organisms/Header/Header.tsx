@@ -1,24 +1,48 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 import { Button } from '../../atoms';
 
 const Header: React.FC = () => {
+  const location = useLocation();
+
+  const isActive = (path: string): boolean => {
+    return location.pathname === path;
+  };
+
   return (
     <header className="bg-white shadow-sm">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
-          <span className="text-primary font-display font-bold text-xl">Garden Planner</span>
+          <Link to="/">
+            <span className="text-primary font-display font-bold text-xl">Garden Planner</span>
+          </Link>
         </div>
         <nav className="hidden md:flex items-center space-x-6">
-          <a href="/" className="text-gray-700 hover:text-primary font-medium transition-colors">
+          <Link 
+            to="/" 
+            className={`font-medium transition-colors ${
+              isActive('/') ? 'text-primary' : 'text-gray-700 hover:text-primary'
+            }`}
+          >
             Home
-          </a>
-          <a href="/garden" className="text-gray-700 hover:text-primary font-medium transition-colors">
+          </Link>
+          <Link 
+            to="/garden" 
+            className={`font-medium transition-colors ${
+              isActive('/garden') ? 'text-primary' : 'text-gray-700 hover:text-primary'
+            }`}
+          >
             My Garden
-          </a>
-          <a href="/plants" className="text-gray-700 hover:text-primary font-medium transition-colors">
+          </Link>
+          <Link 
+            to="/plants" 
+            className={`font-medium transition-colors ${
+              isActive('/plants') ? 'text-primary' : 'text-gray-700 hover:text-primary'
+            }`}
+          >
             Plants
-          </a>
+          </Link>
         </nav>
         <div className="flex items-center space-x-3">
           <Button variant="outline" size="sm">

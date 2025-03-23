@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 import { Button } from '../../atoms';
 import { MainLayout } from '../../templates';
@@ -18,7 +19,9 @@ const HomePage: React.FC = () => {
             </p>
             <div className="flex flex-wrap gap-4">
               <Button size="lg">Get Started</Button>
-              <Button variant="outline" size="lg">Browse Plants</Button>
+              <Link to="/plants">
+                <Button variant="outline" size="lg">Browse Plants</Button>
+              </Link>
             </div>
           </div>
           <div className="flex-1">

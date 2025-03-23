@@ -1,1 +1,4 @@
-export { default as Header } from './Header';
+import Header from './Header';
+import PlantGallery from './PlantGallery';
+
+export { Header, PlantGallery };

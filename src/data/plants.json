@@ -9,14 +9,18 @@
       "waterNeeds": "low",
       "dimensions": {
         "mature": { "height": 36, "width": 36 },
-        "initialYear": { "height": 12, "width": 12 }
+        "initialYear": { "height": 12, "width": 12 },
+        "threeYears": { "height": 24, "width": 24 },
+        "fiveYears": { "height": 30, "width": 30 }
       },
       "growthRate": "medium",
       "images": {
         "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Lavender", "alt": "Lavender plant" },
         "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Lavender", "alt": "Lavender plant" }
       },
-      "tags": ["aromatic", "drought-tolerant", "bee-friendly"]
+      "maintenanceDifficulty": 2,
+      "bloomTime": "Summer",
+      "tags": ["aromatic", "drought-tolerant", "bee-friendly", "mediterranean"]
     },
     {
       "id": "plant-002",
@@ -28,14 +32,18 @@
       "waterNeeds": "medium",
       "dimensions": {
         "mature": { "height": 240, "width": 240 },
-        "initialYear": { "height": 48, "width": 36 }
+        "initialYear": { "height": 48, "width": 36 },
+        "threeYears": { "height": 96, "width": 72 },
+        "fiveYears": { "height": 144, "width": 120 }
       },
       "growthRate": "slow",
       "images": {
         "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Japanese+Maple", "alt": "Japanese Maple tree" },
         "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Japanese+Maple", "alt": "Japanese Maple tree" }
       },
-      "tags": ["ornamental", "fall-color", "shade"]
+      "maintenanceDifficulty": 3,
+      "bloomTime": "Spring",
+      "tags": ["ornamental", "fall-color", "shade", "focal-point"]
     },
     {
       "id": "plant-003",
@@ -47,14 +55,18 @@
       "waterNeeds": "high",
       "dimensions": {
         "mature": { "height": 60, "width": 60 },
-        "initialYear": { "height": 24, "width": 24 }
+        "initialYear": { "height": 24, "width": 24 },
+        "threeYears": { "height": 42, "width": 42 },
+        "fiveYears": { "height": 54, "width": 54 }
       },
       "growthRate": "medium",
       "images": {
         "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Hydrangea", "alt": "Hydrangea shrub" },
         "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Hydrangea", "alt": "Hydrangea shrub" }
       },
-      "tags": ["flowering", "shade-tolerant", "cottage"]
+      "maintenanceDifficulty": 3,
+      "bloomTime": "Summer to Fall",
+      "tags": ["flowering", "shade-tolerant", "cottage", "showy"]
     },
     {
       "id": "plant-004",
@@ -66,14 +78,18 @@
       "waterNeeds": "low",
       "dimensions": {
         "mature": { "height": 48, "width": 36 },
-        "initialYear": { "height": 12, "width": 12 }
+        "initialYear": { "height": 12, "width": 12 },
+        "threeYears": { "height": 36, "width": 24 },
+        "fiveYears": { "height": 42, "width": 30 }
       },
       "growthRate": "medium",
       "images": {
         "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Rosemary", "alt": "Rosemary plant" },
         "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Rosemary", "alt": "Rosemary plant" }
       },
-      "tags": ["edible", "aromatic", "drought-tolerant", "evergreen"]
+      "maintenanceDifficulty": 1,
+      "bloomTime": "Spring to Summer",
+      "tags": ["edible", "aromatic", "drought-tolerant", "evergreen", "culinary"]
     },
     {
       "id": "plant-005",
@@ -85,13 +101,362 @@
       "waterNeeds": "medium",
       "dimensions": {
         "mature": { "height": 72, "width": 72 },
-        "initialYear": { "height": 18, "width": 18 }
+        "initialYear": { "height": 18, "width": 18 },
+        "threeYears": { "height": 36, "width": 36 },
+        "fiveYears": { "height": 48, "width": 48 }
       },
       "growthRate": "slow",
       "images": {
         "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Boxwood", "alt": "Boxwood shrub" },
         "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Boxwood", "alt": "Boxwood shrub" }
       },
+      "maintenanceDifficulty": 3,
+      "bloomTime": "Spring",
       "tags": ["evergreen", "hedge", "formal", "topiary"]
+    },
+    {
+      "id": "plant-006",
+      "name": "Hosta",
+      "scientificName": "Hosta spp.",
+      "description": "Shade-loving perennials grown primarily for their attractive foliage in various colors and patterns.",
+      "category": "perennial",
+      "sunExposure": "shade",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 24, "width": 36 },
+        "initialYear": { "height": 12, "width": 18 },
+        "threeYears": { "height": 18, "width": 30 },
+        "fiveYears": { "height": 24, "width": 36 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Hosta", "alt": "Hosta plant" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Hosta", "alt": "Hosta plant" }
+      },
+      "maintenanceDifficulty": 1,
+      "bloomTime": "Summer",
+      "tags": ["shade", "foliage", "low-maintenance", "woodland"]
+    },
+    {
+      "id": "plant-007",
+      "name": "Azalea",
+      "scientificName": "Rhododendron spp.",
+      "description": "Flowering shrubs with vibrant blooms in spring, perfect for adding color to shaded areas.",
+      "category": "shrub",
+      "sunExposure": "partial-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 60, "width": 60 },
+        "initialYear": { "height": 24, "width": 24 },
+        "threeYears": { "height": 40, "width": 40 },
+        "fiveYears": { "height": 50, "width": 50 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Azalea", "alt": "Azalea shrub" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Azalea", "alt": "Azalea shrub" }
+      },
+      "maintenanceDifficulty": 3,
+      "bloomTime": "Spring",
+      "tags": ["flowering", "shade-tolerant", "acidic-soil", "woodland"]
+    },
+    {
+      "id": "plant-008",
+      "name": "Ornamental Grass",
+      "scientificName": "Miscanthus sinensis",
+      "description": "Tall, graceful grass with feathery plumes that add movement and texture to gardens.",
+      "category": "grass",
+      "sunExposure": "full-sun",
+      "waterNeeds": "low",
+      "dimensions": {
+        "mature": { "height": 72, "width": 36 },
+        "initialYear": { "height": 36, "width": 24 },
+        "threeYears": { "height": 60, "width": 30 },
+        "fiveYears": { "height": 72, "width": 36 }
+      },
+      "growthRate": "fast",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Ornamental+Grass", "alt": "Ornamental grass" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Ornamental+Grass", "alt": "Ornamental grass" }
+      },
+      "maintenanceDifficulty": 1,
+      "bloomTime": "Late Summer to Fall",
+      "tags": ["texture", "movement", "drought-tolerant", "winter-interest"]
+    },
+    {
+      "id": "plant-009",
+      "name": "Tulip",
+      "scientificName": "Tulipa spp.",
+      "description": "Popular spring-flowering bulbs available in a wide range of colors and varieties.",
+      "category": "perennial",
+      "sunExposure": "full-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 18, "width": 6 },
+        "initialYear": { "height": 18, "width": 6 },
+        "threeYears": { "height": 18, "width": 6 },
+        "fiveYears": { "height": 18, "width": 6 }
+      },
+      "growthRate": "fast",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Tulip", "alt": "Tulip flower" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Tulip", "alt": "Tulip flower" }
+      },
+      "maintenanceDifficulty": 2,
+      "bloomTime": "Spring",
+      "tags": ["bulb", "spring-color", "cut-flower", "border"]
+    },
+    {
+      "id": "plant-010",
+      "name": "Tomato",
+      "scientificName": "Solanum lycopersicum",
+      "description": "Popular vegetable plant producing edible fruits in various sizes and colors.",
+      "category": "vegetable",
+      "sunExposure": "full-sun",
+      "waterNeeds": "high",
+      "dimensions": {
+        "mature": { "height": 60, "width": 24 },
+        "initialYear": { "height": 60, "width": 24 },
+        "threeYears": { "height": 60, "width": 24 },
+        "fiveYears": { "height": 60, "width": 24 }
+      },
+      "growthRate": "fast",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Tomato", "alt": "Tomato plant" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Tomato", "alt": "Tomato plant" }
+      },
+      "maintenanceDifficulty": 3,
+      "bloomTime": "Summer",
+      "tags": ["edible", "annual", "vegetable", "kitchen-garden"]
+    },
+    {
+      "id": "plant-011",
+      "name": "Coneflower",
+      "scientificName": "Echinacea purpurea",
+      "description": "Hardy perennial with daisy-like flowers that attract butterflies and birds.",
+      "category": "perennial",
+      "sunExposure": "full-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 36, "width": 24 },
+        "initialYear": { "height": 18, "width": 12 },
+        "threeYears": { "height": 30, "width": 18 },
+        "fiveYears": { "height": 36, "width": 24 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Coneflower", "alt": "Coneflower plant" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Coneflower", "alt": "Coneflower plant" }
+      },
+      "maintenanceDifficulty": 1,
+      "bloomTime": "Summer to Fall",
+      "tags": ["native", "pollinator", "drought-tolerant", "wildlife"]
+    },
+    {
+      "id": "plant-012",
+      "name": "Climbing Rose",
+      "scientificName": "Rosa 'New Dawn'",
+      "description": "Classic climbing rose with fragrant, pale pink blooms that can be trained along walls, fences, or trellises.",
+      "category": "climber",
+      "sunExposure": "full-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 180, "width": 72 },
+        "initialYear": { "height": 60, "width": 24 },
+        "threeYears": { "height": 120, "width": 48 },
+        "fiveYears": { "height": 168, "width": 60 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Climbing+Rose", "alt": "Climbing rose" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Climbing+Rose", "alt": "Climbing rose" }
+      },
+      "maintenanceDifficulty": 4,
+      "bloomTime": "Spring to Fall",
+      "tags": ["flowering", "fragrant", "vertical", "romantic"]
+    },
+    {
+      "id": "plant-013",
+      "name": "Basil",
+      "scientificName": "Ocimum basilicum",
+      "description": "Aromatic culinary herb with flavorful leaves used in cooking, especially in Italian dishes.",
+      "category": "herb",
+      "sunExposure": "full-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 24, "width": 18 },
+        "initialYear": { "height": 24, "width": 18 },
+        "threeYears": { "height": 24, "width": 18 },
+        "fiveYears": { "height": 24, "width": 18 }
+      },
+      "growthRate": "fast",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Basil", "alt": "Basil plant" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Basil", "alt": "Basil plant" }
+      },
+      "maintenanceDifficulty": 2,
+      "bloomTime": "Summer",
+      "tags": ["edible", "aromatic", "annual", "culinary"]
+    },
+    {
+      "id": "plant-014",
+      "name": "Dahlia",
+      "scientificName": "Dahlia spp.",
+      "description": "Showy perennial with large, complex flowers in a variety of colors and forms.",
+      "category": "perennial",
+      "sunExposure": "full-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 36, "width": 24 },
+        "initialYear": { "height": 36, "width": 24 },
+        "threeYears": { "height": 36, "width": 24 },
+        "fiveYears": { "height": 36, "width": 24 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Dahlia", "alt": "Dahlia flower" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Dahlia", "alt": "Dahlia flower" }
+      },
+      "maintenanceDifficulty": 3,
+      "bloomTime": "Summer to Fall",
+      "tags": ["flowering", "cut-flower", "tuber", "showy"]
+    },
+    {
+      "id": "plant-015",
+      "name": "Dwarf Arborvitae",
+      "scientificName": "Thuja occidentalis 'Little Giant'",
+      "description": "Compact evergreen with dense, fan-like foliage, perfect for small spaces or as a low hedge.",
+      "category": "shrub",
+      "sunExposure": "full-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 48, "width": 48 },
+        "initialYear": { "height": 18, "width": 18 },
+        "threeYears": { "height": 30, "width": 30 },
+        "fiveYears": { "height": 36, "width": 36 }
+      },
+      "growthRate": "slow",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Arborvitae", "alt": "Dwarf Arborvitae" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Arborvitae", "alt": "Dwarf Arborvitae" }
+      },
+      "maintenanceDifficulty": 1,
+      "bloomTime": "Non-flowering",
+      "tags": ["evergreen", "hedge", "foundation", "winter-interest"]
+    },
+    {
+      "id": "plant-016",
+      "name": "Bleeding Heart",
+      "scientificName": "Lamprocapnos spectabilis",
+      "description": "Elegant perennial with heart-shaped flowers dangling from arching stems, perfect for shade gardens.",
+      "category": "perennial",
+      "sunExposure": "shade",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 30, "width": 24 },
+        "initialYear": { "height": 18, "width": 12 },
+        "threeYears": { "height": 30, "width": 24 },
+        "fiveYears": { "height": 30, "width": 24 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Bleeding+Heart", "alt": "Bleeding Heart plant" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Bleeding+Heart", "alt": "Bleeding Heart plant" }
+      },
+      "maintenanceDifficulty": 2,
+      "bloomTime": "Spring to Early Summer",
+      "tags": ["shade", "woodland", "spring-interest", "unique-flower"]
+    },
+    {
+      "id": "plant-017",
+      "name": "Cherry Tree",
+      "scientificName": "Prunus serrulata",
+      "description": "Ornamental flowering tree known for its stunning spring blossoms in white or pink.",
+      "category": "tree",
+      "sunExposure": "full-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 300, "width": 300 },
+        "initialYear": { "height": 72, "width": 36 },
+        "threeYears": { "height": 144, "width": 72 },
+        "fiveYears": { "height": 180, "width": 120 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Cherry+Tree", "alt": "Cherry Tree" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Cherry+Tree", "alt": "Cherry Tree" }
+      },
+      "maintenanceDifficulty": 3,
+      "bloomTime": "Spring",
+      "tags": ["flowering", "ornamental", "spring-interest", "focal-point"]
+    },
+    {
+      "id": "plant-018",
+      "name": "Phlox",
+      "scientificName": "Phlox paniculata",
+      "description": "Upright perennial with fragrant, colorful flower clusters that attract butterflies and hummingbirds.",
+      "category": "perennial",
+      "sunExposure": "full-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 36, "width": 24 },
+        "initialYear": { "height": 24, "width": 12 },
+        "threeYears": { "height": 36, "width": 24 },
+        "fiveYears": { "height": 36, "width": 24 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Phlox", "alt": "Phlox flowers" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Phlox", "alt": "Phlox flowers" }
+      },
+      "maintenanceDifficulty": 2,
+      "bloomTime": "Summer",
+      "tags": ["fragrant", "pollinator", "cottage", "cut-flower"]
+    },
+    {
+      "id": "plant-019",
+      "name": "Oakleaf Hydrangea",
+      "scientificName": "Hydrangea quercifolia",
+      "description": "Distinctive hydrangea with oak-shaped leaves and cone-shaped flower clusters, offering multi-season interest.",
+      "category": "shrub",
+      "sunExposure": "partial-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 72, "width": 72 },
+        "initialYear": { "height": 24, "width": 24 },
+        "threeYears": { "height": 48, "width": 48 },
+        "fiveYears": { "height": 60, "width": 60 }
+      },
+      "growthRate": "medium",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Oakleaf+Hydrangea", "alt": "Oakleaf Hydrangea" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Oakleaf+Hydrangea", "alt": "Oakleaf Hydrangea" }
+      },
+      "maintenanceDifficulty": 2,
+      "bloomTime": "Summer",
+      "tags": ["native", "multi-season", "fall-color", "woodland-edge"]
+    },
+    {
+      "id": "plant-020",
+      "name": "Strawberry",
+      "scientificName": "Fragaria × ananassa",
+      "description": "Low-growing perennial that produces sweet, edible red fruits and sends out runners to create new plants.",
+      "category": "perennial",
+      "sunExposure": "full-sun",
+      "waterNeeds": "medium",
+      "dimensions": {
+        "mature": { "height": 8, "width": 24 },
+        "initialYear": { "height": 6, "width": 12 },
+        "threeYears": { "height": 8, "width": 24 },
+        "fiveYears": { "height": 8, "width": 24 }
+      },
+      "growthRate": "fast",
+      "images": {
+        "thumbnail": { "src": "https://via.placeholder.com/100x100.png?text=Strawberry", "alt": "Strawberry plant" },
+        "fullSize": { "src": "https://via.placeholder.com/400x400.png?text=Strawberry", "alt": "Strawberry plant" }
+      },
+      "maintenanceDifficulty": 2,
+      "bloomTime": "Spring",
+      "tags": ["edible", "groundcover", "fruit", "container-friendly"]
     }
   ]

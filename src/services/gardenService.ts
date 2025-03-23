@@ -8,6 +8,13 @@ const CURRENT_GARDEN_KEY = 'garden_planner_current_garden';
 const GARDEN_IMAGE_PREFIX = 'garden_planner_image_';
 
 /**
+ * Helper function to get all gardens
+ */
+const getAllGardens = (): Garden[] => {
+  return getFromLocalStorage<Garden[]>(GARDENS_KEY) || [];
+};
+
+/**
  * Service for managing garden data in local storage
  */
 export const gardenService = {
@@ -27,7 +34,7 @@ export const gardenService = {
     };
 
     // Save the garden
-    this.saveGarden(garden);
+    gardenService.saveGarden(garden);
     
     // Save the image
     saveImageToLocalStorage(`${GARDEN_IMAGE_PREFIX}${garden.id}`, imageUrl);
@@ -42,10 +49,10 @@ export const gardenService = {
    * Save a garden
    */
   saveGarden: (garden: Garden): void => {
-    const gardens = this.getAllGardens();
+    const gardens = getAllGardens();
     
     // Update the garden if it exists, otherwise add it
-    const index = gardens.findIndex(g => g.id === garden.id);
+    const index = gardens.findIndex((g: Garden) => g.id === garden.id);
     
     if (index !== -1) {
       gardens[index] = {
@@ -62,16 +69,14 @@ export const gardenService = {
   /**
    * Get all gardens
    */
-  getAllGardens: (): Garden[] => {
-    return getFromLocalStorage<Garden[]>(GARDENS_KEY) || [];
-  },
+  getAllGardens,
 
   /**
    * Get a garden by ID
    */
   getGardenById: (id: string): Garden | null => {
-    const gardens = this.getAllGardens();
-    const garden = gardens.find(g => g.id === id);
+    const gardens = getAllGardens();
+    const garden = gardens.find((g: Garden) => g.id === id);
     
     if (!garden) {
       return null;
@@ -97,7 +102,7 @@ export const gardenService = {
       return null;
     }
     
-    return this.getGardenById(currentGardenId);
+    return gardenService.getGardenById(currentGardenId);
   },
 
   /**
@@ -111,8 +116,8 @@ export const gardenService = {
    * Delete a garden
    */
   deleteGarden: (gardenId: string): void => {
-    const gardens = this.getAllGardens();
-    const filteredGardens = gardens.filter(g => g.id !== gardenId);
+    const gardens = getAllGardens();
+    const filteredGardens = gardens.filter((g: Garden) => g.id !== gardenId);
     
     saveToLocalStorage(GARDENS_KEY, filteredGardens);
     
@@ -130,7 +135,7 @@ export const gardenService = {
    * Add a plant to the garden
    */
   addPlantToGarden: (gardenId: string, plantPosition: Omit<PlantPosition, 'id'>): PlantPosition => {
-    const garden = this.getGardenById(gardenId);
+    const garden = gardenService.getGardenById(gardenId);
     
     if (!garden) {
       throw new Error(`Garden with ID ${gardenId} not found`);
@@ -144,7 +149,7 @@ export const gardenService = {
     garden.plants.push(newPlantPosition);
     garden.updatedAt = new Date().toISOString();
     
-    this.saveGarden(garden);
+    gardenService.saveGarden(garden);
     
     return newPlantPosition;
   },
@@ -153,13 +158,13 @@ export const gardenService = {
    * Update a plant position in the garden
    */
   updatePlantPosition: (gardenId: string, updatedPlantPosition: PlantPosition): void => {
-    const garden = this.getGardenById(gardenId);
+    const garden = gardenService.getGardenById(gardenId);
     
     if (!garden) {
       throw new Error(`Garden with ID ${gardenId} not found`);
     }
     
-    const index = garden.plants.findIndex(p => p.id === updatedPlantPosition.id);
+    const index = garden.plants.findIndex((p: PlantPosition) => p.id === updatedPlantPosition.id);
     
     if (index === -1) {
       throw new Error(`Plant position with ID ${updatedPlantPosition.id} not found in garden`);
@@ -168,30 +173,30 @@ export const gardenService = {
     garden.plants[index] = updatedPlantPosition;
     garden.updatedAt = new Date().toISOString();
     
-    this.saveGarden(garden);
+    gardenService.saveGarden(garden);
   },
 
   /**
    * Remove a plant from the garden
    */
   removePlantFromGarden: (gardenId: string, plantPositionId: string): void => {
-    const garden = this.getGardenById(gardenId);
+    const garden = gardenService.getGardenById(gardenId);
     
     if (!garden) {
       throw new Error(`Garden with ID ${gardenId} not found`);
     }
     
-    garden.plants = garden.plants.filter(p => p.id !== plantPositionId);
+    garden.plants = garden.plants.filter((p: PlantPosition) => p.id !== plantPositionId);
     garden.updatedAt = new Date().toISOString();
     
-    this.saveGarden(garden);
+    gardenService.saveGarden(garden);
   },
 
   /**
    * Change the view time of the garden
    */
   setGardenViewTime: (gardenId: string, viewTime: Garden['viewTime']): void => {
-    const garden = this.getGardenById(gardenId);
+    const garden = gardenService.getGardenById(gardenId);
     
     if (!garden) {
       throw new Error(`Garden with ID ${gardenId} not found`);
@@ -199,14 +204,14 @@ export const gardenService = {
     
     garden.viewTime = viewTime;
     
-    this.saveGarden(garden);
+    gardenService.saveGarden(garden);
   },
 
   /**
    * Update garden dimensions
    */
   updateGardenDimensions: (gardenId: string, dimensions: GardenDimensions): void => {
-    const garden = this.getGardenById(gardenId);
+    const garden = gardenService.getGardenById(gardenId);
     
     if (!garden) {
       throw new Error(`Garden with ID ${gardenId} not found`);
@@ -215,6 +220,6 @@ export const gardenService = {
     garden.dimensions = dimensions;
     garden.updatedAt = new Date().toISOString();
     
-    this.saveGarden(garden);
+    gardenService.saveGarden(garden);
   }
 };
