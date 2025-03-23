@@ -4,6 +4,15 @@
 
 import { GardenDimensions, PlantDimensions } from '../types';
 
+/**
+ * Scale information for converting between pixels and real-world dimensions
+ */
+export interface ScaleInfo {
+  pixelsPerInch: number;
+  referenceObjectWidth: number; // in pixels
+  referenceRealWidth: number; // in inches
+}
+
 // Convert real-world dimensions (feet/inches) to percentage of garden
 export const dimensionsToPercentage = (
   dimensions: PlantDimensions,
@@ -37,6 +46,37 @@ export const percentageToDimensions = (
   return {
     width: widthInFeet * 12,
     height: heightInFeet * 12
+  };
+};
+
+// Calculate pixels per inch based on reference object
+export const calculatePixelsPerInch = (
+  referenceWidthPixels: number,
+  referenceWidthInches: number
+): number => {
+  return referenceWidthPixels / referenceWidthInches;
+};
+
+// Calculate dimensions in pixels based on real-world dimensions and scale
+export const inchesToPixels = (
+  dimensions: PlantDimensions,
+  scaleInfo: ScaleInfo
+): { width: number; height: number } => {
+  return {
+    width: dimensions.width * scaleInfo.pixelsPerInch,
+    height: dimensions.height * scaleInfo.pixelsPerInch
+  };
+};
+
+// Calculate real-world dimensions from pixel dimensions
+export const pixelsToInches = (
+  widthPixels: number,
+  heightPixels: number,
+  scaleInfo: ScaleInfo
+): PlantDimensions => {
+  return {
+    width: widthPixels / scaleInfo.pixelsPerInch,
+    height: heightPixels / scaleInfo.pixelsPerInch
   };
 };
 
@@ -110,5 +150,29 @@ export const maintainAspectRatio = (
   return {
     width: originalWidth,
     height: originalHeight
+  };
+};
+
+// Convert feet to inches
+export const feetToInches = (feet: number): number => {
+  return feet * 12;
+};
+
+// Convert inches to feet
+export const inchesToFeet = (inches: number): number => {
+  return inches / 12;
+};
+
+// Create a scale info object from reference object dimensions
+export const createScaleInfo = (
+  referenceWidthPixels: number,
+  referenceRealWidth: number
+): ScaleInfo => {
+  const pixelsPerInch = calculatePixelsPerInch(referenceWidthPixels, referenceRealWidth);
+  
+  return {
+    pixelsPerInch,
+    referenceObjectWidth: referenceWidthPixels,
+    referenceRealWidth
   };
 };

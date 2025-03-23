@@ -21,6 +21,7 @@ const GardenUpload: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const handleImageUploaded = (imageDataUrl: string, file: File) => {
+    console.log("Image uploaded:", imageDataUrl.substring(0, 50) + "...");
     setGardenImage(imageDataUrl);
     setGardenFile(file);
     setCurrentStep(UploadStep.DIMENSIONS);
@@ -60,8 +61,8 @@ const GardenUpload: React.FC = () => {
       // Create the garden in the service
       const newGarden = gardenService.createGarden(gardenName, gardenImage, gardenDimensions);
       
-      // Navigate to the garden editor
-      navigate(`/garden/${newGarden.id}`);
+      // Navigate to the garden scaling page
+      navigate(`/garden/${newGarden.id}/scale`);
     } catch (err) {
       setError('Failed to create garden. Please try again.');
       console.error(err);

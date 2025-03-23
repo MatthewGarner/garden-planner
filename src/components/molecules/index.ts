@@ -1,7 +1,8 @@
 import PlantCard from './PlantCard';
-import PlantFilter from './PlantFilter'; // Replace 'CorrectFileName' with the actual file name if it differs
+import PlantFilter from './PlantFilter';
 import FileUpload from './FileUpload';
 import ImagePreview from './ImagePreview';
 import GardenDimensionsForm from './GardenDimensionsForm';
+import ReferenceObject from './ReferenceObject';
 
-export { PlantCard, PlantFilter, FileUpload, ImagePreview, GardenDimensionsForm };
+export { PlantCard, PlantFilter, FileUpload, ImagePreview, GardenDimensionsForm, ReferenceObject };

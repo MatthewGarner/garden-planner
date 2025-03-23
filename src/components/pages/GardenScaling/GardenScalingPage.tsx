@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '../../templates';
+import { GardenScaling } from '../../organisms';
 import { Button } from '../../atoms';
 import { gardenService } from '../../../services';
 import { Garden } from '../../../types';
 
-const GardenEditorPage: React.FC = () => {
+const GardenScalingPage: React.FC = () => {
   const { gardenId } = useParams<{ gardenId: string }>();
   const navigate = useNavigate();
   const [garden, setGarden] = useState<Garden | null>(null);
@@ -30,12 +31,6 @@ const GardenEditorPage: React.FC = () => {
         }
         
         setGarden(loadedGarden);
-        
-        // If the garden doesn't have a scale reference, redirect to the scaling page
-        if (!loadedGarden.scaleReference) {
-          navigate(`/garden/${gardenId}/scale`);
-          return;
-        }
       } catch (err) {
         console.error(err);
         setError('Failed to load garden data');
@@ -45,7 +40,11 @@ const GardenEditorPage: React.FC = () => {
     };
     
     loadGarden();
-  }, [gardenId, navigate]);
+  }, [gardenId]);
+  
+  const handleScalingComplete = (updatedGarden: Garden) => {
+    setGarden(updatedGarden);
+  };
   
   if (loading) {
     return (
@@ -82,48 +81,20 @@ const GardenEditorPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="container mx-auto py-6">
-        <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-3xl font-bold font-display">{garden.name}</h1>
-          <div className="flex space-x-3">
-            <Button 
-              variant="outline"
-              onClick={() => navigate(`/garden/${gardenId}/scale`)}
-            >
-              Edit Scale
-            </Button>
-            <Button variant="outline">Save Garden</Button>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold font-display mb-2">Set Garden Scale</h1>
+          <p className="text-gray-600">
+            Configure the scale of your garden to ensure plants are sized correctly.
+          </p>
         </div>
         
-        <div className="bg-white rounded-xl shadow-md p-8 flex items-center justify-center min-h-[500px]">
-          <div className="text-center max-w-3xl w-full">
-            <h2 className="text-2xl font-bold mb-4">Garden Editor</h2>
-            <p className="text-gray-600 mb-2">
-              Garden dimensions: {garden.dimensions.width}' × {garden.dimensions.height}'
-            </p>
-            {garden.scaleReference && (
-              <p className="text-gray-600 mb-6">
-                Scale: {garden.scaleReference.pixelsPerInch.toFixed(2)} pixels per inch
-              </p>
-            )}
-            <div className="aspect-video bg-gray-100 rounded-lg mb-6 max-w-3xl w-full mx-auto relative overflow-hidden">
-              <img 
-                src={garden.imageUrl} 
-                alt={garden.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <p className="text-white text-lg font-medium">Garden Editor Coming Soon</p>
-              </div>
-            </div>
-            <p className="text-gray-500">
-              The garden editor is under development. You've successfully set up the garden scaling!
-            </p>
-          </div>
-        </div>
+        <GardenScaling 
+          garden={garden}
+          onScalingComplete={handleScalingComplete}
+        />
       </div>
     </MainLayout>
   );
 };
 
-export default GardenEditorPage;
+export default GardenScalingPage;

@@ -4,7 +4,8 @@ import {
   HomePage, 
   PlantBrowserPage,
   GardenUploadPage,
-  GardenEditorPage
+  GardenEditorPage,
+  GardenScalingPage
 } from './components/pages';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         <Route path="/plants" element={<PlantBrowserPage />} />
         <Route path="/garden/new" element={<GardenUploadPage />} />
         <Route path="/garden/:gardenId" element={<GardenEditorPage />} />
+        <Route path="/garden/:gardenId/scale" element={<GardenScalingPage />} />
         <Route path="/garden" element={<Navigate replace to="/garden/new" />} />
       </Routes>
     </Router>

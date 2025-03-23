@@ -25,6 +25,13 @@ export interface GardenDimensions {
     };
   }
   
+  export interface ScaleReference {
+    width: number; // width in pixels
+    height: number; // height in pixels
+    realWidth: number; // real-world width in inches
+    pixelsPerInch: number; // calculated pixels per inch
+  }
+  
   export interface Garden {
     id: string;
     name: string;
@@ -32,6 +39,7 @@ export interface GardenDimensions {
     updatedAt: string;
     imageUrl: string;
     dimensions: GardenDimensions;
+    scaleReference?: ScaleReference;
     plants: PlantPosition[];
     zones?: GardenZone[];
     viewTime: 'current' | 'year3' | 'year5' | 'mature';

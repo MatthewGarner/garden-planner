@@ -1,6 +1,7 @@
-import { Garden, PlantPosition, GardenDimensions } from '../types';
+import { Garden, PlantPosition, GardenDimensions, ScaleReference } from '../types';
 import { saveToLocalStorage, getFromLocalStorage, removeFromLocalStorage, saveImageToLocalStorage, getImageFromLocalStorage } from '../utils/storage';
 import { generateUUID } from '../utils/general';
+import { calculatePixelsPerInch } from '../utils/scale';
 
 // Keys for localStorage
 const GARDENS_KEY = 'garden_planner_gardens';
@@ -129,6 +130,34 @@ export const gardenService = {
     if (currentGardenId === gardenId) {
       removeFromLocalStorage(CURRENT_GARDEN_KEY);
     }
+  },
+
+  /**
+   * Set scale reference for a garden
+   */
+  setScaleReference: (gardenId: string, scaleRef: { width: number; height: number; realWidth: number }): Garden | null => {
+    const garden = gardenService.getGardenById(gardenId);
+    
+    if (!garden) {
+      return null;
+    }
+    
+    const pixelsPerInch = calculatePixelsPerInch(scaleRef.width, scaleRef.realWidth);
+    
+    const scaleReference: ScaleReference = {
+      ...scaleRef,
+      pixelsPerInch
+    };
+    
+    const updatedGarden: Garden = {
+      ...garden,
+      scaleReference,
+      updatedAt: new Date().toISOString()
+    };
+    
+    gardenService.saveGarden(updatedGarden);
+    
+    return updatedGarden;
   },
 
   /**
