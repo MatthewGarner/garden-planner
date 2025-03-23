@@ -1,13 +1,14 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { Button } from '../../atoms';
 
 const Header: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path: string): boolean => {
-    return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
   return (
@@ -22,7 +23,9 @@ const Header: React.FC = () => {
           <Link 
             to="/" 
             className={`font-medium transition-colors ${
-              isActive('/') ? 'text-primary' : 'text-gray-700 hover:text-primary'
+              isActive('/') && !isActive('/garden') && !isActive('/plants') 
+                ? 'text-primary' 
+                : 'text-gray-700 hover:text-primary'
             }`}
           >
             Home
@@ -48,7 +51,11 @@ const Header: React.FC = () => {
           <Button variant="outline" size="sm">
             Help
           </Button>
-          <Button variant="primary" size="sm">
+          <Button 
+            variant="primary" 
+            size="sm"
+            onClick={() => navigate('/garden/new')}
+          >
             New Garden
           </Button>
         </div>

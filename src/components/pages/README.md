@@ -48,10 +48,10 @@ yarn start
 src/
 ├── components/          # React components using atomic design
 │   ├── atoms/           # Basic building blocks (Button, etc.)
-│   ├── molecules/       # Combinations of atoms (PlantCard, PlantFilter)
-│   ├── organisms/       # Complex components (Header, PlantGallery)
+│   ├── molecules/       # Combinations of atoms (PlantCard, FileUpload, etc.)
+│   ├── organisms/       # Complex components (Header, PlantGallery, GardenUpload)
 │   ├── templates/       # Page layouts (MainLayout)
-│   └── pages/           # Complete pages (HomePage, PlantBrowserPage)
+│   └── pages/           # Complete pages (HomePage, PlantBrowserPage, etc.)
 ├── hooks/               # Custom React hooks
 ├── services/            # Services for data operations
 ├── utils/               # Utility functions
@@ -65,7 +65,7 @@ src/
 
 1. ✅ Project setup and initial structure
 2. ✅ Plant database implementation 
-3. ❌ Garden photo upload functionality
+3. ✅ Garden photo upload functionality
 4. ❌ Garden scaling system
 5. ❌ Plant selection interface
 6. ❌ Plant placement system
@@ -76,15 +76,17 @@ src/
 
 ## Current Progress
 
-The project now has a working plant database with:
+The project now has:
 
-- 20 different plants with detailed information
-- Filtering by category, sun exposure, water needs, etc.
-- Plant cards with essential details
-- Detailed plant view with growth information
-- Navigation and routing between pages
+- Working plant database with filtering and detailed information
+- Complete garden photo upload flow:
+  - Drag-and-drop file upload with validation
+  - Garden dimension configuration
+  - Garden creation and naming
+- Navigation between pages
+- Local storage for saving garden data
 
-The next steps will focus on implementing the garden photo upload functionality and plant placement system.
+The next step will focus on implementing the garden scaling system and plant placement functionality.
 
 ## Browser Support
 

@@ -1,10 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { Button } from '../../atoms';
 import { MainLayout } from '../../templates';
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto">
@@ -18,7 +20,12 @@ const HomePage: React.FC = () => {
               before you buy. Plan, visualize, and create the perfect outdoor space.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button size="lg">Get Started</Button>
+              <Button 
+                size="lg"
+                onClick={() => navigate('/garden/new')}
+              >
+                Get Started
+              </Button>
               <Link to="/plants">
                 <Button variant="outline" size="lg">Browse Plants</Button>
               </Link>
