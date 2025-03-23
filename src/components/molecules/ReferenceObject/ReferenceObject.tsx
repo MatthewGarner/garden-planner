@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../../atoms';
 
 interface ReferenceObjectProps {
@@ -22,22 +22,16 @@ const ReferenceObject: React.FC<ReferenceObjectProps> = ({
   const [objectWidth, setObjectWidth] = useState<number>(REFERENCE_OBJECTS[0].defaultWidth);
   const [isPlacing, setIsPlacing] = useState(false);
   const [referenceRect, setReferenceRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
-
-  // When image loads, get its dimensions
-  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    setImageSize({
-      width: img.naturalWidth,
-      height: img.naturalHeight
-    });
-  };
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   // Handle object selection
   const handleObjectSelect = (object: typeof REFERENCE_OBJECTS[0]) => {
     setSelectedObject(object);
     if (object.name !== 'Custom') {
       setObjectWidth(object.defaultWidth);
+    } else {
+      setObjectWidth(customWidth);
     }
   };
 
@@ -58,25 +52,31 @@ const ReferenceObject: React.FC<ReferenceObjectProps> = ({
 
   // Handle click on the image to place the reference object
   const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isPlacing || !imageSize) return;
+    if (!isPlacing || !imageContainerRef.current || !imageRef.current) return;
 
-    const container = e.currentTarget;
-    const rect = container.getBoundingClientRect();
+    // Get the bounding client rect of the container
+    const containerRect = imageContainerRef.current.getBoundingClientRect();
     
-    // Calculate click position relative to the image
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Calculate click position relative to the image container
+    const relativeX = e.clientX - containerRect.left;
+    const relativeY = e.clientY - containerRect.top;
     
-    // Calculate the initial reference size (default height is 2x width for most objects)
-    const refWidth = 100; // pixels on screen
-    const refHeight = selectedObject.name === 'Door' ? refWidth * 2.5 : 
-                      selectedObject.name === 'Person' ? refWidth * 2 : 
-                      refWidth;
+    // Calculate the reference object size (in pixels)
+    // Default sizes for common objects
+    const refHeightMultiplier = 
+      selectedObject.name === 'Door' ? 2.5 : 
+      selectedObject.name === 'Person' ? 2 : 
+      selectedObject.name === 'Chair' ? 1 : 1;
+    
+    const refWidth = 100; // Default width in pixels
+    const refHeight = refWidth * refHeightMultiplier;
+    
+    console.log('Placing reference object at:', { x: relativeX, y: relativeY, width: refWidth, height: refHeight });
     
     // Set the reference rectangle
     setReferenceRect({
-      x,
-      y,
+      x: relativeX,
+      y: relativeY,
       width: refWidth,
       height: refHeight
     });
@@ -86,9 +86,9 @@ const ReferenceObject: React.FC<ReferenceObjectProps> = ({
 
   // Complete reference setting
   const handleSetReference = () => {
-    if (!referenceRect || !imageSize) return;
+    if (!referenceRect) return;
     
-    // Calculate the reference object's real-world dimensions
+    // Pass the reference object's dimensions to the parent component
     onReferenceSet({
       width: referenceRect.width,
       height: referenceRect.height,
@@ -154,42 +154,41 @@ const ReferenceObject: React.FC<ReferenceObjectProps> = ({
       <div className="mb-4">
         <p className="text-sm text-gray-500 mb-2">
           {isPlacing
-            ? "Click on the image to place the reference object"
+            ? `Click on the image to place the ${selectedObject.name}`
             : referenceRect
             ? `${selectedObject.name} (${objectWidth}" wide) placed on image`
             : "Click 'Place Reference' to position your reference object"}
         </p>
         
-        <div className="relative rounded-lg overflow-hidden bg-gray-100">
+        <div 
+          className="relative rounded-lg overflow-hidden bg-gray-100" 
+          ref={imageContainerRef}
+          onClick={handleImageClick}
+        >
           <img
+            ref={imageRef}
             src={gardenImageUrl}
             alt="Garden with reference"
             className="w-full h-auto"
-            onLoad={handleImageLoad}
           />
           
-          <div
-            className="absolute inset-0 cursor-crosshair"
-            onClick={handleImageClick}
-          >
-            {/* Show the placed reference object */}
-            {referenceRect && (
-              <div
-                className="absolute border-2 border-primary bg-primary bg-opacity-30 flex items-center justify-center text-white font-medium"
-                style={{
-                  left: `${referenceRect.x}px`,
-                  top: `${referenceRect.y}px`,
-                  width: `${referenceRect.width}px`,
-                  height: `${referenceRect.height}px`,
-                  transform: 'translate(-50%, -50%)'
-                }}
-              >
-                <div className="text-xs bg-primary px-2 py-1 rounded">
-                  {objectWidth}"
-                </div>
+          {/* Show the placed reference object */}
+          {referenceRect && (
+            <div
+              className="absolute border-2 border-primary bg-primary bg-opacity-30 flex items-center justify-center text-white font-medium"
+              style={{
+                left: `${referenceRect.x}px`,
+                top: `${referenceRect.y}px`,
+                width: `${referenceRect.width}px`,
+                height: `${referenceRect.height}px`,
+                transform: 'translate(-50%, -50%)'
+              }}
+            >
+              <div className="text-xs bg-primary px-2 py-1 rounded">
+                {objectWidth}"
               </div>
-            )}
-          </div>
+            </div>
+          )}
           
           {isPlacing && (
             <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
